@@ -242,6 +242,19 @@ def extract_entries(text, source_name, default_port, cf_networks, cloudflare_onl
     return entries
 
 
+def classify_carrier(item):
+    """根据来源标签把全量池结果补充回三网分类。"""
+    text = f"{item.get('tag', '')} {item.get('source', '')}".upper()
+
+    if "电信" in text or "CTCC" in text or re.search(r"\\bCT\\b", text):
+        return "ct"
+    if "联通" in text or "CUCC" in text or "UNICOM" in text or re.search(r"\\bCU\\b", text):
+        return "cu"
+    if "移动" in text or "CMCC" in text or "MOBILE" in text:
+        return "cmcc"
+    return None
+
+
 def round_robin_merge(pools, limit):
     merged = []
     seen = set()
@@ -413,9 +426,12 @@ def main():
 
         results[group_key] = merged
 
-    # Global sources plus carrier pools, so /all remains useful even if one global source fails.
+    # Global sources. If an entry carries an operator label, feed it back into
+    # that carrier pool as a supplemental source. This mirrors the common
+    # public BestCF/CFYes format where one list contains tagged CT/CU/CMCC rows.
     all_group = groups["all"]
-    all_pools = [results["ct"], results["cu"], results["cmcc"]]
+    global_pools = []
+    classified_pools = {"ct": [], "cu": [], "cmcc": []}
 
     for source in all_group.get("sources", []):
         items, state = fetch_source(
@@ -426,9 +442,22 @@ def main():
             settings,
             cf_networks,
         )
-        all_pools.append(items)
+        global_pools.append(items)
         source_status.append(state)
 
+        for item in items:
+            carrier = classify_carrier(item)
+            if carrier:
+                classified_pools[carrier].append(item)
+
+    for group_key in ("ct", "cu", "cmcc"):
+        if classified_pools[group_key]:
+            results[group_key] = round_robin_merge(
+                [results[group_key], classified_pools[group_key]],
+                int(limits.get(group_key, 120)),
+            )
+
+    all_pools = [results["ct"], results["cu"], results["cmcc"]] + global_pools
     results["all"] = round_robin_merge(all_pools, int(limits.get("all", 300)))
     if not results["all"]:
         results["all"] = load_previous("all")
