@@ -1,0 +1,43 @@
+{
+  "generated_at": "2026-10-06 15:10:52 UTC",
+  "group": "cmcc",
+  "count": 6,
+  "items": [
+    {
+      "ip": "104.19.150.163",
+      "port": 443,
+      "tag": "CMCC",
+      "source": "CM 移动优选"
+    },
+    {
+      "ip": "104.17.102.95",
+      "port": 443,
+      "tag": "CMCC",
+      "source": "CM 移动优选"
+    },
+    {
+      "ip": "104.18.86.131",
+      "port": 443,
+      "tag": "CMCC",
+      "source": "CM 移动优选"
+    },
+    {
+      "ip": "104.16.246.173",
+      "port": 443,
+      "tag": "CMCC",
+      "source": "CM 移动优选"
+    },
+    {
+      "ip": "104.18.85.29",
+      "port": 443,
+      "tag": "CMCC",
+      "source": "CM 移动优选"
+    },
+    {
+      "ip": "104.18.147.201",
+      "port": 443,
+      "tag": "CMCC",
+      "source": "CM 移动优选"
+    }
+  ]
+}

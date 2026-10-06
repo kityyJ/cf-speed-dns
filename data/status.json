@@ -1,0 +1,132 @@
+{
+  "generated_at": "2026-10-06 15:10:52 UTC",
+  "cloudflare_range_source": "live",
+  "cloudflare_only": true,
+  "counts": {
+    "ct": 6,
+    "cu": 0,
+    "cmcc": 6,
+    "all": 55
+  },
+  "healthy_sources": 12,
+  "failed_sources": 1,
+  "sources": [
+    {
+      "group": "ct",
+      "group_title": "中国电信",
+      "name": "CM 电信优选",
+      "url": "https://addressesapi.090227.xyz/ct",
+      "ok": true,
+      "count": 6,
+      "error": ""
+    },
+    {
+      "group": "ct",
+      "group_title": "中国电信",
+      "name": "LZ 电信",
+      "url": "https://raw.githubusercontent.com/love-ztm/cfip/refs/heads/main/best_ips.txt",
+      "ok": true,
+      "count": 0,
+      "error": ""
+    },
+    {
+      "group": "ct",
+      "group_title": "中国电信",
+      "name": "MJZ 电信",
+      "url": "https://cf.junzhen.qzz.io/best_ips_bj.txt",
+      "ok": true,
+      "count": 0,
+      "error": ""
+    },
+    {
+      "group": "cu",
+      "group_title": "中国联通",
+      "name": "LZ 联通",
+      "url": "https://raw.githubusercontent.com/love-ztm/cfip/refs/heads/main/ubest_ips.txt",
+      "ok": true,
+      "count": 0,
+      "error": ""
+    },
+    {
+      "group": "cu",
+      "group_title": "中国联通",
+      "name": "MJZ 联通",
+      "url": "https://cf.junzhen.qzz.io/best_ips.txt",
+      "ok": true,
+      "count": 0,
+      "error": ""
+    },
+    {
+      "group": "cmcc",
+      "group_title": "中国移动",
+      "name": "CM 移动优选",
+      "url": "https://addressesapi.090227.xyz/cmcc",
+      "ok": true,
+      "count": 6,
+      "error": ""
+    },
+    {
+      "group": "cmcc",
+      "group_title": "中国移动",
+      "name": "SVIP-S 移动",
+      "url": "https://raw.githubusercontent.com/svip-s/cloudflare_ip/refs/heads/main/best_ips.txt",
+      "ok": true,
+      "count": 0,
+      "error": ""
+    },
+    {
+      "group": "all",
+      "group_title": "全部优选",
+      "name": "CM CloudFlareYes",
+      "url": "https://addressesapi.090227.xyz/CloudFlareYes",
+      "ok": false,
+      "count": 0,
+      "error": "HTTPSConnectionPool(host='addressesapi.090227.xyz', port=443): Read timed out. (read timeout=20)"
+    },
+    {
+      "group": "all",
+      "group_title": "全部优选",
+      "name": "ZhiXuan 镜像",
+      "url": "https://addressesapi.090227.xyz/ip.164746.xyz",
+      "ok": true,
+      "count": 1,
+      "error": ""
+    },
+    {
+      "group": "all",
+      "group_title": "全部优选",
+      "name": "Mingyu BestCF",
+      "url": "https://ipdb.api.030101.xyz/?type=bestcf&country=true",
+      "ok": true,
+      "count": 10,
+      "error": ""
+    },
+    {
+      "group": "all",
+      "group_title": "全部优选",
+      "name": "CM 社区列表",
+      "url": "https://raw.githubusercontent.com/cmliu/WorkerVless2sub/main/addressesapi.txt",
+      "ok": true,
+      "count": 0,
+      "error": ""
+    },
+    {
+      "group": "all",
+      "group_title": "全部优选",
+      "name": "WeTest 三网",
+      "url": "https://bestcf.pages.dev/wetest/ipv4.txt",
+      "ok": true,
+      "count": 17,
+      "error": ""
+    },
+    {
+      "group": "all",
+      "group_title": "全部优选",
+      "name": "CFYes 三网",
+      "url": "https://bestcf.pages.dev/cfyes/ipv4.txt",
+      "ok": true,
+      "count": 17,
+      "error": ""
+    }
+  ]
+}

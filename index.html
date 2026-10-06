@@ -4,42 +4,126 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="color-scheme" content="light dark">
-  <meta name="description" content="Cloudflare 优选 IP 实时列表">
-  <title>Cloudflare 优选 IP</title>
+  <meta name="description" content="Cloudflare 三网优选 IP 聚合池">
+  <title>CF 优选 IP 池</title>
   <style>
-    :root{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif;color-scheme:light dark;--bg:#f5f5f7;--card:rgba(255,255,255,.82);--text:#1d1d1f;--muted:#6e6e73;--line:rgba(0,0,0,.08);--accent:#0071e3;--good:#34c759}
-    @media(prefers-color-scheme:dark){:root{--bg:#000;--card:rgba(28,28,30,.84);--text:#f5f5f7;--muted:#a1a1a6;--line:rgba(255,255,255,.12);--accent:#2997ff}}
-    *{box-sizing:border-box}body{margin:0;min-height:100vh;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}.wrap{width:min(960px,calc(100% - 28px));margin:0 auto;padding:44px 0 56px}.hero{margin-bottom:22px}h1{margin:0 0 8px;font-size:clamp(30px,5vw,46px);line-height:1.08;letter-spacing:-.035em}.sub{margin:0;color:var(--muted);font-size:15px;line-height:1.6}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:22px 0}.stat,.panel{border:1px solid var(--line);background:var(--card);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:18px;box-shadow:0 8px 30px rgba(0,0,0,.04)}.stat{padding:16px}.label{color:var(--muted);font-size:12px;margin-bottom:6px}.value{font-size:18px;font-weight:650;overflow-wrap:anywhere}.online{display:inline-flex;align-items:center;gap:7px}.dot{width:9px;height:9px;border-radius:50%;background:var(--good);box-shadow:0 0 0 4px rgba(52,199,89,.14)}.panel{overflow:hidden}.panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;border-bottom:1px solid var(--line)}.panel-head strong{font-size:15px}.links{display:flex;flex-wrap:wrap;gap:8px}.links a,td a{color:var(--accent);text-decoration:none}.links a{font-size:13px}.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:540px}th,td{padding:14px 18px;text-align:left;border-bottom:1px solid var(--line);font-size:14px}th{color:var(--muted);font-size:12px;font-weight:600}tr:last-child td{border-bottom:0}.rank{width:74px;color:var(--muted)}code{font-family:"SFMono-Regular",Consolas,monospace;font-size:13px}footer{margin-top:18px;color:var(--muted);font-size:12px;text-align:center}@media(max-width:700px){.wrap{padding-top:28px}.grid{grid-template-columns:1fr}.panel-head{align-items:flex-start;flex-direction:column}}
+    :root {
+      font-family: -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif;
+      color-scheme: light dark;
+      --bg:#f5f5f7;--card:rgba(255,255,255,.82);--text:#1d1d1f;--muted:#6e6e73;
+      --line:rgba(0,0,0,.08);--accent:#0071e3;--good:#34c759;--warn:#ff9f0a;
+      --shadow:0 12px 40px rgba(0,0,0,.06);
+    }
+    @media (prefers-color-scheme:dark) {
+      :root {--bg:#000;--card:rgba(28,28,30,.86);--text:#f5f5f7;--muted:#a1a1a6;
+        --line:rgba(255,255,255,.12);--accent:#2997ff;--shadow:0 12px 40px rgba(0,0,0,.28)}
+    }
+    *{box-sizing:border-box}html{-webkit-text-size-adjust:100%}body{margin:0;background:var(--bg);color:var(--text);min-height:100vh}
+    button,a{font:inherit}.wrap{width:min(1080px,calc(100% - 28px));margin:auto;padding:42px 0 60px}
+    h1{font-size:clamp(32px,5vw,52px);letter-spacing:-.045em;line-height:1.04;margin:0 0 10px}
+    .lead{margin:0;color:var(--muted);line-height:1.65}.top{display:flex;justify-content:space-between;gap:18px;align-items:flex-end;margin-bottom:24px}
+    .badge{display:inline-flex;align-items:center;gap:8px;padding:8px 11px;border:1px solid var(--line);border-radius:999px;background:var(--card);font-size:12px;color:var(--muted);white-space:nowrap}
+    .dot{width:8px;height:8px;border-radius:50%;background:var(--good);box-shadow:0 0 0 4px rgba(52,199,89,.13)}
+    .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:20px 0}
+    .card,.panel{background:var(--card);border:1px solid var(--line);border-radius:19px;box-shadow:var(--shadow);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+    .card{padding:16px}.label{font-size:12px;color:var(--muted);margin-bottom:7px}.value{font-size:22px;font-weight:700;letter-spacing:-.02em}
+    .tabs{display:flex;gap:8px;overflow:auto;padding-bottom:3px;margin:20px 0 12px}.tab{border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:999px;padding:9px 14px;cursor:pointer;white-space:nowrap}
+    .tab.active{background:var(--text);color:var(--bg);border-color:var(--text)}
+    .panel{overflow:hidden}.panel-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 18px;border-bottom:1px solid var(--line)}
+    .actions{display:flex;gap:8px;flex-wrap:wrap}.btn{border:1px solid var(--line);background:transparent;color:var(--accent);padding:8px 11px;border-radius:10px;text-decoration:none;cursor:pointer;font-size:13px}
+    .table-wrap{overflow:auto;max-height:620px}table{border-collapse:collapse;width:100%;min-width:680px}th,td{padding:13px 18px;border-bottom:1px solid var(--line);text-align:left;font-size:14px}
+    th{position:sticky;top:0;background:var(--card);backdrop-filter:blur(20px);font-size:12px;color:var(--muted);z-index:1}
+    tr:last-child td{border-bottom:0}code{font-family:"SFMono-Regular",Consolas,monospace;font-size:13px}.muted{color:var(--muted)}.copy{cursor:pointer;color:var(--accent)}
+    .sources{margin-top:14px;padding:16px 18px}.sources summary{cursor:pointer;font-weight:650}.source-list{margin-top:12px;display:grid;gap:8px}
+    .source{display:flex;justify-content:space-between;gap:16px;font-size:13px;padding:9px 0;border-bottom:1px solid var(--line)}.source:last-child{border:0}.ok{color:var(--good)}.bad{color:var(--warn)}
+    footer{text-align:center;color:var(--muted);font-size:12px;margin-top:18px;line-height:1.6}
+    @media(max-width:760px){.wrap{padding-top:28px}.top{align-items:flex-start;flex-direction:column}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.panel-head{align-items:flex-start;flex-direction:column}}
   </style>
 </head>
 <body>
-  <main class="wrap">
-    <section class="hero">
-      <h1>Cloudflare 优选 IP</h1>
-      <p class="sub">自动读取 Cloudflare DNS A 记录并生成静态列表，无前端 API 依赖。</p>
-    </section>
-    <section class="grid" aria-label="状态">
-      <div class="stat"><div class="label">状态</div><div class="value online"><span class="dot"></span>正常</div></div>
-      <div class="stat"><div class="label">当前首选</div><div class="value">104.18.40.65</div></div>
-      <div class="stat"><div class="label">记录数量</div><div class="value">3</div></div>
-    </section>
-    <section class="panel">
-      <div class="panel-head">
-        <strong>优选 IP 列表</strong>
-        <div class="links"><a href="./ipTop.html">纯文本接口</a><a href="./ipTop10.html">Top 10 接口</a></div>
+<main class="wrap">
+  <div class="top">
+    <div>
+      <h1>CF 优选 IP 池</h1>
+      <p class="lead">多来源聚合 · 三网分类 · Cloudflare 官方 IPv4 网段校验 · 自动更新</p>
+    </div>
+    <div class="badge"><span class="dot"></span><span id="updated">读取状态…</span></div>
+  </div>
+
+  <section class="stats">
+    <div class="card"><div class="label">电信</div><div class="value" id="count-ct">—</div></div>
+    <div class="card"><div class="label">联通</div><div class="value" id="count-cu">—</div></div>
+    <div class="card"><div class="label">移动</div><div class="value" id="count-cmcc">—</div></div>
+    <div class="card"><div class="label">全部</div><div class="value" id="count-all">—</div></div>
+  </section>
+
+  <div class="tabs">
+    <button class="tab active" data-group="all">全部</button>
+    <button class="tab" data-group="ct">电信</button>
+    <button class="tab" data-group="cu">联通</button>
+    <button class="tab" data-group="cmcc">移动</button>
+  </div>
+
+  <section class="panel">
+    <div class="panel-head">
+      <div><strong id="group-title">全部优选</strong> <span class="muted" id="group-count"></span></div>
+      <div class="actions">
+        <a class="btn" id="txt-link" href="./api/all.txt">TXT API</a>
+        <a class="btn" id="json-link" href="./api/all.json">JSON API</a>
+        <button class="btn" id="copy-list">复制当前列表</button>
       </div>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>排名</th><th>IP 地址</th><th>查询</th></tr></thead>
-          <tbody>
-            <tr><td class="rank">1</td><td><code>104.18.40.65</code></td><td><a href="https://zh-hans.ipshu.com/ipv4/104.18.40.65" target="_blank" rel="noopener noreferrer">查看详情</a></td></tr>
-            <tr><td class="rank">2</td><td><code>172.64.229.128</code></td><td><a href="https://zh-hans.ipshu.com/ipv4/172.64.229.128" target="_blank" rel="noopener noreferrer">查看详情</a></td></tr>
-            <tr><td class="rank">3</td><td><code>162.159.45.250</code></td><td><a href="https://zh-hans.ipshu.com/ipv4/162.159.45.250" target="_blank" rel="noopener noreferrer">查看详情</a></td></tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-    <footer>最后生成：2026-10-06 12:23:10 UTC · GitHub Actions 自动维护</footer>
-  </main>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>#</th><th>IP</th><th>端口</th><th>来源</th><th>标签</th><th></th></tr></thead>
+        <tbody id="rows"><tr><td colspan="6" class="muted">正在载入…</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <details class="card sources">
+    <summary>数据源状态</summary>
+    <div id="sources" class="source-list"></div>
+  </details>
+
+  <footer>
+    静态接口：<code>./api/ct.txt</code> · <code>./api/cu.txt</code> · <code>./api/cmcc.txt</code> · <code>./api/all.txt</code><br>
+    部署到 Cloudflare Pages 后支持兼容接口：<code>/ct?ips=6</code>、<code>/cu?ips=6</code>、<code>/cmcc?ips=8</code>、<code>/all?ips=20</code>
+  </footer>
+</main>
+<script>
+const titles={all:"全部优选",ct:"中国电信",cu:"中国联通",cmcc:"中国移动"};
+let current="all", currentItems=[];
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+async function loadStatus(){
+  try{
+    const s=await fetch("./data/status.json",{cache:"no-store"}).then(r=>r.json());
+    document.querySelector("#updated").textContent="更新："+s.generated_at;
+    for(const g of ["ct","cu","cmcc","all"]) document.querySelector("#count-"+g).textContent=s.counts?.[g]??0;
+    document.querySelector("#sources").innerHTML=(s.sources||[]).map(x=>`<div class="source"><span>${esc(x.group_title)} · ${esc(x.name)}</span><span class="${x.ok?"ok":"bad"}">${x.ok?("成功 "+x.count+" 条"):("失败")}</span></div>`).join("")||'<div class="muted">暂无状态</div>';
+  }catch(e){document.querySelector("#updated").textContent="状态读取失败"}
+}
+async function loadGroup(group){
+  current=group;
+  document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x.dataset.group===group));
+  document.querySelector("#group-title").textContent=titles[group];
+  document.querySelector("#txt-link").href=`./api/${group}.txt`;
+  document.querySelector("#json-link").href=`./api/${group}.json`;
+  document.querySelector("#rows").innerHTML='<tr><td colspan="6" class="muted">正在载入…</td></tr>';
+  try{
+    const d=await fetch(`./api/${group}.json`,{cache:"no-store"}).then(r=>r.json());
+    currentItems=d.items||[];
+    document.querySelector("#group-count").textContent=`· ${currentItems.length} 条`;
+    document.querySelector("#rows").innerHTML=currentItems.map((x,i)=>`<tr>
+      <td class="muted">${i+1}</td><td><code>${esc(x.ip)}</code></td><td>${esc(x.port)}</td>
+      <td>${esc(x.source)}</td><td class="muted">${esc(x.tag)}</td>
+      <td class="copy" data-copy="${esc(x.ip)}:${esc(x.port)}">复制</td></tr>`).join("")||'<tr><td colspan="6" class="muted">暂无可用 IP</td></tr>';
+  }catch(e){currentItems=[];document.querySelector("#rows").innerHTML='<tr><td colspan="6" class="muted">读取失败</td></tr>'}
+}
+document.querySelectorAll(".tab").forEach(x=>x.onclick=()=>loadGroup(x.dataset.group));
+document.querySelector("#rows").onclick=e=>{const v=e.target.dataset.copy;if(v)navigator.clipboard.writeText(v)};
+document.querySelector("#copy-list").onclick=()=>navigator.clipboard.writeText(currentItems.map(x=>`${x.ip}:${x.port}#${x.tag}`).join("\n"));
+loadStatus();loadGroup("all");
+</script>
 </body>
 </html>
