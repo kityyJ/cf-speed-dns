@@ -1,19 +1,31 @@
 {
-  "generated_at": "2026-10-06 15:10:52 UTC",
+  "generated_at": "2026-10-06 15:12:30 UTC",
   "group": "all",
   "count": 55,
   "items": [
     {
-      "ip": "162.159.152.205",
+      "ip": "162.159.153.170",
       "port": 443,
       "tag": "CT",
       "source": "CM 电信优选"
     },
     {
-      "ip": "104.19.150.163",
+      "ip": "104.24.162.45",
+      "port": 443,
+      "tag": "微测优选 | 联通 | LAX | 104.24.162.45",
+      "source": "WeTest 三网"
+    },
+    {
+      "ip": "104.18.83.92",
       "port": 443,
       "tag": "CMCC",
       "source": "CM 移动优选"
+    },
+    {
+      "ip": "172.67.164.222",
+      "port": 443,
+      "tag": "CM-Default",
+      "source": "CM CloudFlareYes"
     },
     {
       "ip": "172.64.229.43",
@@ -34,28 +46,22 @@
       "source": "WeTest 三网"
     },
     {
-      "ip": "172.67.164.222",
+      "ip": "172.67.65.228",
       "port": 443,
-      "tag": "CFYes优选 | 移动 | 172.67.164.222",
+      "tag": "CFYes优选 | 移动 | 172.67.65.228",
       "source": "CFYes 三网"
     },
     {
-      "ip": "162.159.152.11",
+      "ip": "104.25.51.139",
       "port": 443,
-      "tag": "CT",
-      "source": "CM 电信优选"
+      "tag": "微测优选 | 电信 | FRA | 104.25.51.139",
+      "source": "WeTest 三网"
     },
     {
-      "ip": "104.17.102.95",
+      "ip": "104.17.113.65",
       "port": 443,
-      "tag": "CMCC",
-      "source": "CM 移动优选"
-    },
-    {
-      "ip": "104.20.48.232",
-      "port": 443,
-      "tag": "Mingyu BestCF",
-      "source": "Mingyu BestCF"
+      "tag": "微测优选 | 联通 | HKG | 104.17.113.65",
+      "source": "WeTest 三网"
     },
     {
       "ip": "104.17.153.143",
@@ -64,25 +70,13 @@
       "source": "WeTest 三网"
     },
     {
-      "ip": "172.67.65.228",
+      "ip": "198.41.208.60",
       "port": 443,
-      "tag": "CFYes优选 | 移动 | 172.67.65.228",
-      "source": "CFYes 三网"
+      "tag": "CM-Default",
+      "source": "CM CloudFlareYes"
     },
     {
-      "ip": "162.159.153.239",
-      "port": 443,
-      "tag": "CT",
-      "source": "CM 电信优选"
-    },
-    {
-      "ip": "104.18.86.131",
-      "port": 443,
-      "tag": "CMCC",
-      "source": "CM 移动优选"
-    },
-    {
-      "ip": "104.16.149.113",
+      "ip": "104.20.48.232",
       "port": 443,
       "tag": "Mingyu BestCF",
       "source": "Mingyu BestCF"
@@ -94,25 +88,37 @@
       "source": "WeTest 三网"
     },
     {
-      "ip": "198.41.208.60",
+      "ip": "198.41.208.243",
       "port": 443,
-      "tag": "CFYes优选 | 移动 | 198.41.208.60",
+      "tag": "CFYes优选 | 移动 | 198.41.208.243",
       "source": "CFYes 三网"
     },
     {
-      "ip": "162.159.153.216",
+      "ip": "162.159.152.11",
       "port": 443,
       "tag": "CT",
       "source": "CM 电信优选"
     },
     {
-      "ip": "104.16.246.173",
+      "ip": "104.17.130.174",
+      "port": 443,
+      "tag": "微测优选 | 联通 | SJC | 104.17.130.174",
+      "source": "WeTest 三网"
+    },
+    {
+      "ip": "104.16.246.132",
       "port": 443,
       "tag": "CMCC",
       "source": "CM 移动优选"
     },
     {
-      "ip": "104.19.152.65",
+      "ip": "172.67.65.202",
+      "port": 443,
+      "tag": "CM-Default",
+      "source": "CM CloudFlareYes"
+    },
+    {
+      "ip": "104.16.149.113",
       "port": 443,
       "tag": "Mingyu BestCF",
       "source": "Mingyu BestCF"
@@ -124,25 +130,37 @@
       "source": "WeTest 三网"
     },
     {
-      "ip": "198.41.208.243",
+      "ip": "172.64.67.117",
       "port": 443,
-      "tag": "CFYes优选 | 移动 | 198.41.208.243",
+      "tag": "CFYes优选 | 联通 | 172.64.67.117",
       "source": "CFYes 三网"
     },
     {
-      "ip": "162.159.153.212",
+      "ip": "104.25.178.92",
       "port": 443,
-      "tag": "CT",
-      "source": "CM 电信优选"
+      "tag": "微测优选 | 电信 | FRA | 104.25.178.92",
+      "source": "WeTest 三网"
     },
     {
-      "ip": "104.18.85.29",
+      "ip": "104.17.152.98",
+      "port": 443,
+      "tag": "微测优选 | 联通 | SJC | 104.17.152.98",
+      "source": "WeTest 三网"
+    },
+    {
+      "ip": "104.16.246.188",
       "port": 443,
       "tag": "CMCC",
       "source": "CM 移动优选"
     },
     {
-      "ip": "104.17.127.236",
+      "ip": "162.159.236.194",
+      "port": 443,
+      "tag": "CU-NRT",
+      "source": "CM CloudFlareYes"
+    },
+    {
+      "ip": "104.19.152.65",
       "port": 443,
       "tag": "Mingyu BestCF",
       "source": "Mingyu BestCF"
@@ -154,25 +172,37 @@
       "source": "WeTest 三网"
     },
     {
-      "ip": "172.67.65.202",
+      "ip": "172.67.251.117",
       "port": 443,
-      "tag": "CFYes优选 | 移动 | 172.67.65.202",
+      "tag": "CFYes优选 | 联通 | 172.67.251.117",
       "source": "CFYes 三网"
     },
     {
-      "ip": "162.159.152.155",
+      "ip": "162.159.152.81",
       "port": 443,
       "tag": "CT",
       "source": "CM 电信优选"
     },
     {
-      "ip": "104.18.147.201",
+      "ip": "104.18.46.218",
+      "port": 443,
+      "tag": "微测优选 | 联通 | LAX | 104.18.46.218",
+      "source": "WeTest 三网"
+    },
+    {
+      "ip": "104.19.144.212",
       "port": 443,
       "tag": "CMCC",
       "source": "CM 移动优选"
     },
     {
-      "ip": "104.18.10.175",
+      "ip": "141.101.113.10",
+      "port": 443,
+      "tag": "CU-NRT",
+      "source": "CM CloudFlareYes"
+    },
+    {
+      "ip": "104.17.127.236",
       "port": 443,
       "tag": "Mingyu BestCF",
       "source": "Mingyu BestCF"
@@ -184,117 +214,9 @@
       "source": "WeTest 三网"
     },
     {
-      "ip": "172.64.67.117",
-      "port": 443,
-      "tag": "CFYes优选 | 联通 | 172.64.67.117",
-      "source": "CFYes 三网"
-    },
-    {
-      "ip": "104.17.21.110",
-      "port": 443,
-      "tag": "Mingyu BestCF",
-      "source": "Mingyu BestCF"
-    },
-    {
-      "ip": "104.24.162.45",
-      "port": 443,
-      "tag": "微测优选 | 联通 | LAX | 104.24.162.45",
-      "source": "WeTest 三网"
-    },
-    {
-      "ip": "162.159.236.194",
-      "port": 443,
-      "tag": "CFYes优选 | 联通 | 162.159.236.194",
-      "source": "CFYes 三网"
-    },
-    {
-      "ip": "104.17.17.117",
-      "port": 443,
-      "tag": "Mingyu BestCF",
-      "source": "Mingyu BestCF"
-    },
-    {
-      "ip": "104.17.113.65",
-      "port": 443,
-      "tag": "微测优选 | 联通 | HKG | 104.17.113.65",
-      "source": "WeTest 三网"
-    },
-    {
-      "ip": "172.67.251.117",
-      "port": 443,
-      "tag": "CFYes优选 | 联通 | 172.67.251.117",
-      "source": "CFYes 三网"
-    },
-    {
-      "ip": "104.20.60.136",
-      "port": 443,
-      "tag": "Mingyu BestCF",
-      "source": "Mingyu BestCF"
-    },
-    {
-      "ip": "104.17.130.174",
-      "port": 443,
-      "tag": "微测优选 | 联通 | SJC | 104.17.130.174",
-      "source": "WeTest 三网"
-    },
-    {
-      "ip": "141.101.113.10",
-      "port": 443,
-      "tag": "CFYes优选 | 联通 | 141.101.113.10",
-      "source": "CFYes 三网"
-    },
-    {
-      "ip": "104.17.24.143",
-      "port": 443,
-      "tag": "Mingyu BestCF",
-      "source": "Mingyu BestCF"
-    },
-    {
-      "ip": "104.17.152.98",
-      "port": 443,
-      "tag": "微测优选 | 联通 | SJC | 104.17.152.98",
-      "source": "WeTest 三网"
-    },
-    {
       "ip": "172.64.83.52",
       "port": 443,
       "tag": "CFYes优选 | 联通 | 172.64.83.52",
-      "source": "CFYes 三网"
-    },
-    {
-      "ip": "104.18.46.218",
-      "port": 443,
-      "tag": "微测优选 | 联通 | LAX | 104.18.46.218",
-      "source": "WeTest 三网"
-    },
-    {
-      "ip": "104.18.195.248",
-      "port": 443,
-      "tag": "CFYes优选 | 电信 | 104.18.195.248",
-      "source": "CFYes 三网"
-    },
-    {
-      "ip": "104.25.51.139",
-      "port": 443,
-      "tag": "微测优选 | 电信 | FRA | 104.25.51.139",
-      "source": "WeTest 三网"
-    },
-    {
-      "ip": "104.17.148.60",
-      "port": 443,
-      "tag": "CFYes优选 | 电信 | 104.17.148.60",
-      "source": "CFYes 三网"
-    },
-    {
-      "ip": "104.25.178.92",
-      "port": 443,
-      "tag": "微测优选 | 电信 | FRA | 104.25.178.92",
-      "source": "WeTest 三网"
-    },
-    {
-      "ip": "104.17.17.28",
-      "port": 443,
-      "tag": "CFYes优选 | 电信 | 104.17.17.28",
       "source": "CFYes 三网"
     },
     {
@@ -304,10 +226,22 @@
       "source": "WeTest 三网"
     },
     {
-      "ip": "104.17.252.22",
+      "ip": "104.17.210.171",
       "port": 443,
-      "tag": "CFYes优选 | 电信 | 104.17.252.22",
-      "source": "CFYes 三网"
+      "tag": "CMCC",
+      "source": "CM 移动优选"
+    },
+    {
+      "ip": "104.18.195.248",
+      "port": 443,
+      "tag": "CT-Default",
+      "source": "CM CloudFlareYes"
+    },
+    {
+      "ip": "104.18.10.175",
+      "port": 443,
+      "tag": "Mingyu BestCF",
+      "source": "Mingyu BestCF"
     },
     {
       "ip": "172.66.209.50",
@@ -316,10 +250,34 @@
       "source": "WeTest 三网"
     },
     {
-      "ip": "172.64.86.47",
+      "ip": "104.17.148.60",
       "port": 443,
-      "tag": "CFYes优选 | 电信 | 172.64.86.47",
+      "tag": "CFYes优选 | 电信 | 104.17.148.60",
       "source": "CFYes 三网"
+    },
+    {
+      "ip": "162.159.152.225",
+      "port": 443,
+      "tag": "CT",
+      "source": "CM 电信优选"
+    },
+    {
+      "ip": "104.17.223.37",
+      "port": 443,
+      "tag": "CMCC",
+      "source": "CM 移动优选"
+    },
+    {
+      "ip": "104.17.17.28",
+      "port": 443,
+      "tag": "CT-Default",
+      "source": "CM CloudFlareYes"
+    },
+    {
+      "ip": "104.17.21.110",
+      "port": 443,
+      "tag": "Mingyu BestCF",
+      "source": "Mingyu BestCF"
     },
     {
       "ip": "162.159.154.153",
@@ -328,10 +286,52 @@
       "source": "WeTest 三网"
     },
     {
+      "ip": "104.17.252.22",
+      "port": 443,
+      "tag": "CFYes优选 | 电信 | 104.17.252.22",
+      "source": "CFYes 三网"
+    },
+    {
+      "ip": "162.159.153.217",
+      "port": 443,
+      "tag": "CT",
+      "source": "CM 电信优选"
+    },
+    {
+      "ip": "172.64.86.47",
+      "port": 443,
+      "tag": "CT-Default",
+      "source": "CM CloudFlareYes"
+    },
+    {
+      "ip": "104.17.17.117",
+      "port": 443,
+      "tag": "Mingyu BestCF",
+      "source": "Mingyu BestCF"
+    },
+    {
       "ip": "162.159.197.1",
       "port": 443,
-      "tag": "CFYes优选IPv4 | 分享免费优选网 BestCF.pages.dev",
-      "source": "CFYes 三网"
+      "tag": "WeTest优选 | 分享免费优选网 BestCF.pages.dev",
+      "source": "WeTest 三网"
+    },
+    {
+      "ip": "162.159.153.144",
+      "port": 443,
+      "tag": "CT",
+      "source": "CM 电信优选"
+    },
+    {
+      "ip": "104.20.60.136",
+      "port": 443,
+      "tag": "Mingyu BestCF",
+      "source": "Mingyu BestCF"
+    },
+    {
+      "ip": "104.17.24.143",
+      "port": 443,
+      "tag": "Mingyu BestCF",
+      "source": "Mingyu BestCF"
     }
   ]
 }

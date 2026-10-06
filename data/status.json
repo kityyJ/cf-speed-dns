@@ -1,15 +1,15 @@
 {
-  "generated_at": "2026-10-06 15:10:52 UTC",
+  "generated_at": "2026-10-06 15:12:30 UTC",
   "cloudflare_range_source": "live",
   "cloudflare_only": true,
   "counts": {
-    "ct": 6,
-    "cu": 0,
-    "cmcc": 6,
+    "ct": 16,
+    "cu": 10,
+    "cmcc": 16,
     "all": 55
   },
-  "healthy_sources": 12,
-  "failed_sources": 1,
+  "healthy_sources": 13,
+  "failed_sources": 0,
   "sources": [
     {
       "group": "ct",
@@ -79,9 +79,9 @@
       "group_title": "全部优选",
       "name": "CM CloudFlareYes",
       "url": "https://addressesapi.090227.xyz/CloudFlareYes",
-      "ok": false,
-      "count": 0,
-      "error": "HTTPSConnectionPool(host='addressesapi.090227.xyz', port=443): Read timed out. (read timeout=20)"
+      "ok": true,
+      "count": 15,
+      "error": ""
     },
     {
       "group": "all",
