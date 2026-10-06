@@ -30,23 +30,50 @@ DEFAULT_TIMEOUT = 30
 
 def get_cf_speed_test_ip(timeout=10, max_retries=5):
     """
-    获取 Cloudflare 优选 IP
+    获取当前优选 IP。
 
-    Args:
-        timeout: 单次请求超时时间
-        max_retries: 最大重试次数
-
-    Returns:
-        优选 IP 字符串，失败返回 None
+    优先读取仓库内由 aggregate_ips.py 生成的 ipTop10.html，
+    这样 DNS 更新和页面/API 使用同一套 IP 池。仅当本地文件不存在
+    或为空时，才回退到外部 URL。
     """
+    local_path = os.path.join(os.path.dirname(__file__), "ipTop10.html")
+    try:
+        if os.path.exists(local_path):
+            with open(local_path, "r", encoding="utf-8") as f:
+                value = f.read().strip()
+            if value:
+                print(f"使用本地优选 IP 池: {local_path}")
+                return value
+    except Exception as e:
+        print(f"读取本地优选 IP 池失败: {e}")
+
+    fallback_url = os.environ.get(
+        "CF_IP_SOURCE_URL",
+        "https://addressesapi.090227.xyz/CloudFlareYes",
+    )
+
     for attempt in range(max_retries):
         try:
             response = requests.get(
-                'https://ip.164746.xyz/ipTop.html',
-                timeout=timeout
+                fallback_url,
+                timeout=timeout,
+                headers={"User-Agent": "cf-speed-dns/2.0"},
             )
             if response.status_code == 200:
-                return response.text
+                # 外部兼容格式通常是一行一个 IP:port#标签。
+                ips = []
+                for line in response.text.replace(",", "\n").splitlines():
+                    value = line.strip().split("#", 1)[0].strip()
+                    if not value:
+                        continue
+                    if ":" in value:
+                        value = value.split(":", 1)[0].strip()
+                    parts = value.split(".")
+                    if len(parts) == 4 and all(p.isdigit() and 0 <= int(p) <= 255 for p in parts):
+                        if value not in ips:
+                            ips.append(value)
+                if ips:
+                    return ",".join(ips[:10])
         except Exception as e:
             print(f"获取优选 IP 失败 (尝试 {attempt + 1}/{max_retries}): {e}")
             if attempt == max_retries - 1:
