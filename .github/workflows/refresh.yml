@@ -11,12 +11,19 @@ on:
       - "sources.json"
       - "requirements.txt"
       - ".github/workflows/refresh.yml"
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "aggregate_ips.py"
+      - "sources.json"
+      - "requirements.txt"
+      - ".github/workflows/refresh.yml"
 
 permissions:
   contents: write
 
 concurrency:
-  group: refresh-ip-pools
+  group: refresh-ip-pools-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -38,6 +45,7 @@ jobs:
         run: python aggregate_ips.py
 
       - name: Commit refreshed data
+        if: github.event_name != 'pull_request'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
