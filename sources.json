@@ -80,6 +80,34 @@
         {
           "name": "CFYes 三网",
           "url": "https://bestcf.pages.dev/cfyes/ipv4.txt"
+        },
+        {
+          "name": "UOUIN 三网",
+          "url": "https://bestcf.pages.dev/uouin/all.txt"
+        },
+        {
+          "name": "LuoLi 优选",
+          "url": "https://bestcf.pages.dev/luoli/all.txt"
+        },
+        {
+          "name": "Xinyitang 三网",
+          "url": "https://bestcf.pages.dev/xinyitang3/ipv4.txt"
+        },
+        {
+          "name": "LZJ 多地区",
+          "url": "https://bestcf.pages.dev/lzj/all.txt"
+        },
+        {
+          "name": "天诚 多地区",
+          "url": "https://bestcf.pages.dev/tiancheng/all.txt"
+        },
+        {
+          "name": "Gslege 测速",
+          "url": "https://bestcf.pages.dev/gslege/Cfxyz.txt"
+        },
+        {
+          "name": "S5 公益",
+          "url": "https://bestcf.pages.dev/s5gy/all.txt"
         }
       ]
     }
