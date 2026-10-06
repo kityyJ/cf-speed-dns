@@ -1,14 +1,14 @@
 {
-  "generated_at": "2026-10-06 15:12:30 UTC",
+  "generated_at": "2026-10-06 15:13:28 UTC",
   "cloudflare_range_source": "live",
   "cloudflare_only": true,
   "counts": {
-    "ct": 16,
-    "cu": 10,
-    "cmcc": 16,
-    "all": 55
+    "ct": 26,
+    "cu": 20,
+    "cmcc": 26,
+    "all": 101
   },
-  "healthy_sources": 13,
+  "healthy_sources": 20,
   "failed_sources": 0,
   "sources": [
     {
@@ -126,6 +126,69 @@
       "url": "https://bestcf.pages.dev/cfyes/ipv4.txt",
       "ok": true,
       "count": 17,
+      "error": ""
+    },
+    {
+      "group": "all",
+      "group_title": "全部优选",
+      "name": "UOUIN 三网",
+      "url": "https://bestcf.pages.dev/uouin/all.txt",
+      "ok": true,
+      "count": 42,
+      "error": ""
+    },
+    {
+      "group": "all",
+      "group_title": "全部优选",
+      "name": "LuoLi 优选",
+      "url": "https://bestcf.pages.dev/luoli/all.txt",
+      "ok": true,
+      "count": 0,
+      "error": ""
+    },
+    {
+      "group": "all",
+      "group_title": "全部优选",
+      "name": "Xinyitang 三网",
+      "url": "https://bestcf.pages.dev/xinyitang3/ipv4.txt",
+      "ok": true,
+      "count": 0,
+      "error": ""
+    },
+    {
+      "group": "all",
+      "group_title": "全部优选",
+      "name": "LZJ 多地区",
+      "url": "https://bestcf.pages.dev/lzj/all.txt",
+      "ok": true,
+      "count": 0,
+      "error": ""
+    },
+    {
+      "group": "all",
+      "group_title": "全部优选",
+      "name": "天诚 多地区",
+      "url": "https://bestcf.pages.dev/tiancheng/all.txt",
+      "ok": true,
+      "count": 7,
+      "error": ""
+    },
+    {
+      "group": "all",
+      "group_title": "全部优选",
+      "name": "Gslege 测速",
+      "url": "https://bestcf.pages.dev/gslege/Cfxyz.txt",
+      "ok": true,
+      "count": 3,
+      "error": ""
+    },
+    {
+      "group": "all",
+      "group_title": "全部优选",
+      "name": "S5 公益",
+      "url": "https://bestcf.pages.dev/s5gy/all.txt",
+      "ok": true,
+      "count": 2,
       "error": ""
     }
   ]
