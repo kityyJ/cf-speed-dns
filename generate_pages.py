@@ -1,143 +1,315 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import ipaddress
 import os
 import time
-import requests
 from html import escape
+
+import requests
 
 CF_API_TOKEN = os.environ.get("CF_API_TOKEN")
 CF_ZONE_ID = os.environ.get("CF_ZONE_ID")
 CF_DNS_NAME = os.environ.get("CF_DNS_NAME")
+
+API_BASE = "https://api.cloudflare.com/client/v4"
+TIMEOUT = 20
 
 HEADERS = {
     "Authorization": f"Bearer {CF_API_TOKEN}",
     "Content-Type": "application/json",
 }
 
-def get_dns_ips():
-    url = (
-        f"https://api.cloudflare.com/client/v4/zones/{CF_ZONE_ID}/dns_records"
-        f"?type=A&name={CF_DNS_NAME}"
-    )
 
-    resp = requests.get(url, headers=HEADERS, timeout=30)
-    data = resp.json()
+def get_dns_ips():
+    if not all([CF_API_TOKEN, CF_ZONE_ID, CF_DNS_NAME]):
+        raise RuntimeError("Missing CF_API_TOKEN / CF_ZONE_ID / CF_DNS_NAME")
+
+    url = f"{API_BASE}/zones/{CF_ZONE_ID}/dns_records"
+    params = {
+        "type": "A",
+        "name": CF_DNS_NAME,
+        "per_page": 100,
+        "page": 1,
+    }
+
+    try:
+        resp = requests.get(url, headers=HEADERS, params=params, timeout=TIMEOUT)
+        resp.raise_for_status()
+        data = resp.json()
+    except requests.RequestException as exc:
+        raise RuntimeError(f"Cloudflare API request failed: {exc}") from exc
+    except ValueError as exc:
+        raise RuntimeError("Cloudflare API returned invalid JSON") from exc
 
     if not data.get("success"):
-        raise RuntimeError(f"Cloudflare API error: {data}")
+        raise RuntimeError(f"Cloudflare API error: {data.get('errors') or data}")
 
-    records = data.get("result", [])
-    ips = [
-        record["content"]
-        for record in records
-        if record.get("type") == "A" and record.get("content")
-    ]
+    ips = []
+    seen = set()
+    for record in data.get("result", []):
+        value = (record.get("content") or "").strip()
+        try:
+            parsed = ipaddress.ip_address(value)
+        except ValueError:
+            continue
+
+        if parsed.version != 4 or value in seen:
+            continue
+
+        seen.add(value)
+        ips.append(value)
 
     if not ips:
-        raise RuntimeError("No A records found")
+        raise RuntimeError(f"No valid A records found for {CF_DNS_NAME}")
 
     return ips
 
-def write_files(ips):
-    now = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-    ip_csv = ",".join(ips)
 
-    with open("ipTop.html", "w", encoding="utf-8") as f:
-        f.write(ip_csv)
+def write_text_file(path, value):
+    with open(path, "w", encoding="utf-8", newline="\n") as f:
+        f.write(value.rstrip() + "\n")
 
-    with open("ipTop10.html", "w", encoding="utf-8") as f:
-        f.write(ip_csv)
 
-    rows = ""
-
+def build_page(ips, now):
+    rows = []
     for index, ip in enumerate(ips, start=1):
         safe_ip = escape(ip)
+        rows.append(
+            f"""          <tr>
+            <td class="rank">{index}</td>
+            <td><code>{safe_ip}</code></td>
+            <td><a href="https://zh-hans.ipshu.com/ipv4/{safe_ip}" target="_blank" rel="noopener noreferrer">查看详情</a></td>
+          </tr>"""
+        )
 
-        rows += f"""
-            <tr>
-                <td>{index}</td>
-                <td>
-                    <a href="https://zh-hans.ipshu.com/ipv4/{safe_ip}" target="_blank">
-                        {safe_ip}
-                    </a>
-                </td>
-                <td>{now}</td>
-            </tr>
-"""
+    rows_html = "\n".join(rows)
+    count = len(ips)
+    top_ip = escape(ips[0])
 
-    html = f"""<!DOCTYPE html>
+    return f"""<!doctype html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cloudflare 优选 IP</title>
-    <style>
-        body {{
-            font-family: Arial, sans-serif;
-            margin: 30px;
-            background: #f7f7f7;
-            color: #111;
-        }}
-
-        h1, p {{
-            text-align: center;
-        }}
-
-        table {{
-            width: 100%;
-            border-collapse: collapse;
-            background: #fff;
-            margin-top: 20px;
-        }}
-
-        th, td {{
-            border: 1px solid #ddd;
-            padding: 12px;
-            text-align: center;
-        }}
-
-        th {{
-            background: #f0f0f0;
-        }}
-
-        a {{
-            color: #0070f3;
-            text-decoration: none;
-        }}
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Cloudflare 优选 IP 实时列表">
+  <title>Cloudflare 优选 IP</title>
+  <style>
+    :root {{
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      color-scheme: light dark;
+      --bg: #f5f5f7;
+      --card: rgba(255,255,255,.82);
+      --text: #1d1d1f;
+      --muted: #6e6e73;
+      --line: rgba(0,0,0,.08);
+      --accent: #0071e3;
+      --good: #34c759;
+    }}
+    @media (prefers-color-scheme: dark) {{
+      :root {{
+        --bg: #000;
+        --card: rgba(28,28,30,.84);
+        --text: #f5f5f7;
+        --muted: #a1a1a6;
+        --line: rgba(255,255,255,.12);
+        --accent: #2997ff;
+      }}
+    }}
+    * {{ box-sizing: border-box; }}
+    body {{
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+    }}
+    .wrap {{
+      width: min(960px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 44px 0 56px;
+    }}
+    .hero {{
+      margin-bottom: 22px;
+    }}
+    h1 {{
+      margin: 0 0 8px;
+      font-size: clamp(30px, 5vw, 46px);
+      line-height: 1.08;
+      letter-spacing: -.035em;
+    }}
+    .sub {{
+      margin: 0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.6;
+    }}
+    .grid {{
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin: 22px 0;
+    }}
+    .stat, .panel {{
+      border: 1px solid var(--line);
+      background: var(--card);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 18px;
+      box-shadow: 0 8px 30px rgba(0,0,0,.04);
+    }}
+    .stat {{ padding: 16px; }}
+    .label {{
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 6px;
+    }}
+    .value {{
+      font-size: 18px;
+      font-weight: 650;
+      overflow-wrap: anywhere;
+    }}
+    .online {{
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }}
+    .dot {{
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--good);
+      box-shadow: 0 0 0 4px rgba(52,199,89,.14);
+    }}
+    .panel {{ overflow: hidden; }}
+    .panel-head {{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+    }}
+    .panel-head strong {{ font-size: 15px; }}
+    .links {{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }}
+    .links a {{
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 13px;
+    }}
+    .table-wrap {{ overflow-x: auto; }}
+    table {{
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 540px;
+    }}
+    th, td {{
+      padding: 14px 18px;
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+      font-size: 14px;
+    }}
+    th {{
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+    }}
+    tr:last-child td {{ border-bottom: 0; }}
+    .rank {{ width: 74px; color: var(--muted); }}
+    code {{
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 13px;
+    }}
+    td a {{
+      color: var(--accent);
+      text-decoration: none;
+    }}
+    footer {{
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+    }}
+    @media (max-width: 700px) {{
+      .wrap {{ padding-top: 28px; }}
+      .grid {{ grid-template-columns: 1fr; }}
+      .panel-head {{ align-items: flex-start; flex-direction: column; }}
+    }}
+  </style>
 </head>
 <body>
-    <h1>Cloudflare 优选 IP</h1>
-    <p>更新时间：{now}</p>
+  <main class="wrap">
+    <section class="hero">
+      <h1>Cloudflare 优选 IP</h1>
+      <p class="sub">自动读取 Cloudflare DNS A 记录并生成静态列表，无前端 API 依赖。</p>
+    </section>
 
-    <table>
-        <thead>
+    <section class="grid" aria-label="状态">
+      <div class="stat">
+        <div class="label">状态</div>
+        <div class="value online"><span class="dot"></span>正常</div>
+      </div>
+      <div class="stat">
+        <div class="label">当前首选</div>
+        <div class="value">{top_ip}</div>
+      </div>
+      <div class="stat">
+        <div class="label">记录数量</div>
+        <div class="value">{count}</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <strong>优选 IP 列表</strong>
+        <div class="links">
+          <a href="./ipTop.html">纯文本接口</a>
+          <a href="./ipTop10.html">Top 10 接口</a>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
             <tr>
-                <th>序号</th>
-                <th>IP 地址</th>
-                <th>更新时间</th>
+              <th>排名</th>
+              <th>IP 地址</th>
+              <th>查询</th>
             </tr>
-        </thead>
-        <tbody>
-{rows}
-        </tbody>
-    </table>
+          </thead>
+          <tbody>
+{rows_html}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer>最后生成：{escape(now)} · GitHub Actions 自动维护</footer>
+  </main>
 </body>
 </html>
 """
 
-    with open("index.html", "w", encoding="utf-8") as f:
-        f.write(html)
+
+def write_files(ips):
+    now = time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime())
+
+    write_text_file("ipTop.html", ",".join(ips))
+    write_text_file("ipTop10.html", ",".join(ips[:10]))
+
+    with open("index.html", "w", encoding="utf-8", newline="\n") as f:
+        f.write(build_page(ips, now))
+
 
 def main():
-    if not all([CF_API_TOKEN, CF_ZONE_ID, CF_DNS_NAME]):
-        raise RuntimeError("Missing CF_API_TOKEN / CF_ZONE_ID / CF_DNS_NAME")
-
     ips = get_dns_ips()
     write_files(ips)
+    print(f"Generated pages with {len(ips)} valid IPv4 record(s)")
 
-    print(f"Generated pages with {len(ips)} IPs")
 
 if __name__ == "__main__":
     main()

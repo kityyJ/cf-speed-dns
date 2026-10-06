@@ -1,89 +1,45 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cloudflare 优选 IP</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 30px;
-            background: #f7f7f7;
-            color: #111;
-        }
-
-        h1, p {
-            text-align: center;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: #fff;
-            margin-top: 20px;
-        }
-
-        th, td {
-            border: 1px solid #ddd;
-            padding: 12px;
-            text-align: center;
-        }
-
-        th {
-            background: #f0f0f0;
-        }
-
-        a {
-            color: #0070f3;
-            text-decoration: none;
-        }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Cloudflare 优选 IP 实时列表">
+  <title>Cloudflare 优选 IP</title>
+  <style>
+    :root{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif;color-scheme:light dark;--bg:#f5f5f7;--card:rgba(255,255,255,.82);--text:#1d1d1f;--muted:#6e6e73;--line:rgba(0,0,0,.08);--accent:#0071e3;--good:#34c759}
+    @media(prefers-color-scheme:dark){:root{--bg:#000;--card:rgba(28,28,30,.84);--text:#f5f5f7;--muted:#a1a1a6;--line:rgba(255,255,255,.12);--accent:#2997ff}}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}.wrap{width:min(960px,calc(100% - 28px));margin:0 auto;padding:44px 0 56px}.hero{margin-bottom:22px}h1{margin:0 0 8px;font-size:clamp(30px,5vw,46px);line-height:1.08;letter-spacing:-.035em}.sub{margin:0;color:var(--muted);font-size:15px;line-height:1.6}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:22px 0}.stat,.panel{border:1px solid var(--line);background:var(--card);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:18px;box-shadow:0 8px 30px rgba(0,0,0,.04)}.stat{padding:16px}.label{color:var(--muted);font-size:12px;margin-bottom:6px}.value{font-size:18px;font-weight:650;overflow-wrap:anywhere}.online{display:inline-flex;align-items:center;gap:7px}.dot{width:9px;height:9px;border-radius:50%;background:var(--good);box-shadow:0 0 0 4px rgba(52,199,89,.14)}.panel{overflow:hidden}.panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;border-bottom:1px solid var(--line)}.panel-head strong{font-size:15px}.links{display:flex;flex-wrap:wrap;gap:8px}.links a,td a{color:var(--accent);text-decoration:none}.links a{font-size:13px}.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:540px}th,td{padding:14px 18px;text-align:left;border-bottom:1px solid var(--line);font-size:14px}th{color:var(--muted);font-size:12px;font-weight:600}tr:last-child td{border-bottom:0}.rank{width:74px;color:var(--muted)}code{font-family:"SFMono-Regular",Consolas,monospace;font-size:13px}footer{margin-top:18px;color:var(--muted);font-size:12px;text-align:center}@media(max-width:700px){.wrap{padding-top:28px}.grid{grid-template-columns:1fr}.panel-head{align-items:flex-start;flex-direction:column}}
+  </style>
 </head>
 <body>
-    <h1>Cloudflare 优选 IP</h1>
-    <p>更新时间：2026-10-06 12:23:10</p>
-
-    <table>
-        <thead>
-            <tr>
-                <th>序号</th>
-                <th>IP 地址</th>
-                <th>更新时间</th>
-            </tr>
-        </thead>
-        <tbody>
-
-            <tr>
-                <td>1</td>
-                <td>
-                    <a href="https://zh-hans.ipshu.com/ipv4/104.18.40.65" target="_blank">
-                        104.18.40.65
-                    </a>
-                </td>
-                <td>2026-10-06 12:23:10</td>
-            </tr>
-
-            <tr>
-                <td>2</td>
-                <td>
-                    <a href="https://zh-hans.ipshu.com/ipv4/172.64.229.128" target="_blank">
-                        172.64.229.128
-                    </a>
-                </td>
-                <td>2026-10-06 12:23:10</td>
-            </tr>
-
-            <tr>
-                <td>3</td>
-                <td>
-                    <a href="https://zh-hans.ipshu.com/ipv4/162.159.45.250" target="_blank">
-                        162.159.45.250
-                    </a>
-                </td>
-                <td>2026-10-06 12:23:10</td>
-            </tr>
-
-        </tbody>
-    </table>
+  <main class="wrap">
+    <section class="hero">
+      <h1>Cloudflare 优选 IP</h1>
+      <p class="sub">自动读取 Cloudflare DNS A 记录并生成静态列表，无前端 API 依赖。</p>
+    </section>
+    <section class="grid" aria-label="状态">
+      <div class="stat"><div class="label">状态</div><div class="value online"><span class="dot"></span>正常</div></div>
+      <div class="stat"><div class="label">当前首选</div><div class="value">104.18.40.65</div></div>
+      <div class="stat"><div class="label">记录数量</div><div class="value">3</div></div>
+    </section>
+    <section class="panel">
+      <div class="panel-head">
+        <strong>优选 IP 列表</strong>
+        <div class="links"><a href="./ipTop.html">纯文本接口</a><a href="./ipTop10.html">Top 10 接口</a></div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>排名</th><th>IP 地址</th><th>查询</th></tr></thead>
+          <tbody>
+            <tr><td class="rank">1</td><td><code>104.18.40.65</code></td><td><a href="https://zh-hans.ipshu.com/ipv4/104.18.40.65" target="_blank" rel="noopener noreferrer">查看详情</a></td></tr>
+            <tr><td class="rank">2</td><td><code>172.64.229.128</code></td><td><a href="https://zh-hans.ipshu.com/ipv4/172.64.229.128" target="_blank" rel="noopener noreferrer">查看详情</a></td></tr>
+            <tr><td class="rank">3</td><td><code>162.159.45.250</code></td><td><a href="https://zh-hans.ipshu.com/ipv4/162.159.45.250" target="_blank" rel="noopener noreferrer">查看详情</a></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <footer>最后生成：2026-10-06 12:23:10 UTC · GitHub Actions 自动维护</footer>
+  </main>
 </body>
 </html>
