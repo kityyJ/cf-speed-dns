@@ -1,0 +1,87 @@
+{
+  "settings": {
+    "timeout_seconds": 20,
+    "max_per_group": {
+      "ct": 120,
+      "cu": 120,
+      "cmcc": 120,
+      "all": 300
+    },
+    "default_port": 443,
+    "cloudflare_only": true
+  },
+  "groups": {
+    "ct": {
+      "title": "中国电信",
+      "sources": [
+        {
+          "name": "CM 电信优选",
+          "url": "https://addressesapi.090227.xyz/ct"
+        },
+        {
+          "name": "LZ 电信",
+          "url": "https://raw.githubusercontent.com/love-ztm/cfip/refs/heads/main/best_ips.txt"
+        },
+        {
+          "name": "MJZ 电信",
+          "url": "https://cf.junzhen.qzz.io/best_ips_bj.txt"
+        }
+      ]
+    },
+    "cu": {
+      "title": "中国联通",
+      "sources": [
+        {
+          "name": "LZ 联通",
+          "url": "https://raw.githubusercontent.com/love-ztm/cfip/refs/heads/main/ubest_ips.txt"
+        },
+        {
+          "name": "MJZ 联通",
+          "url": "https://cf.junzhen.qzz.io/best_ips.txt"
+        }
+      ]
+    },
+    "cmcc": {
+      "title": "中国移动",
+      "sources": [
+        {
+          "name": "CM 移动优选",
+          "url": "https://addressesapi.090227.xyz/cmcc"
+        },
+        {
+          "name": "SVIP-S 移动",
+          "url": "https://raw.githubusercontent.com/svip-s/cloudflare_ip/refs/heads/main/best_ips.txt"
+        }
+      ]
+    },
+    "all": {
+      "title": "全部优选",
+      "sources": [
+        {
+          "name": "CM CloudFlareYes",
+          "url": "https://addressesapi.090227.xyz/CloudFlareYes"
+        },
+        {
+          "name": "ZhiXuan 镜像",
+          "url": "https://addressesapi.090227.xyz/ip.164746.xyz"
+        },
+        {
+          "name": "Mingyu BestCF",
+          "url": "https://ipdb.api.030101.xyz/?type=bestcf&country=true"
+        },
+        {
+          "name": "CM 社区列表",
+          "url": "https://raw.githubusercontent.com/cmliu/WorkerVless2sub/main/addressesapi.txt"
+        },
+        {
+          "name": "WeTest 三网",
+          "url": "https://bestcf.pages.dev/wetest/ipv4.txt"
+        },
+        {
+          "name": "CFYes 三网",
+          "url": "https://bestcf.pages.dev/cfyes/ipv4.txt"
+        }
+      ]
+    }
+  }
+}
