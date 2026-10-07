@@ -75,7 +75,7 @@ export async function onRequest(context) {
     });
   }
 
-  const limit = clamp(url.searchParams.get("ips"), 1, 100, 20);
+  const limit = clamp(url.searchParams.get("ips"), 1, 300, 70);
   const format = (url.searchParams.get("format") || "text").toLowerCase();
 
   if (format === "json") {
