@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-10-06 20:28:12 UTC",
+  "generated_at": "2026-10-07 00:01:02 UTC",
   "cloudflare_range_source": "live",
   "cloudflare_only": true,
   "counts": {
     "ct": 26,
-    "cu": 35,
+    "cu": 50,
     "cmcc": 26,
-    "all": 119
+    "all": 134
   },
   "healthy_sources": 20,
   "failed_sources": 0,
@@ -89,7 +89,7 @@
       "name": "ZhiXuan 镜像",
       "url": "https://addressesapi.090227.xyz/ip.164746.xyz",
       "ok": true,
-      "count": 2,
+      "count": 1,
       "error": ""
     },
     {
@@ -125,7 +125,7 @@
       "name": "CFYes 三网",
       "url": "https://bestcf.pages.dev/cfyes/ipv4.txt",
       "ok": true,
-      "count": 17,
+      "count": 12,
       "error": ""
     },
     {
@@ -179,7 +179,7 @@
       "name": "Gslege 测速",
       "url": "https://bestcf.pages.dev/gslege/Cfxyz.txt",
       "ok": true,
-      "count": 4,
+      "count": 3,
       "error": ""
     },
     {
