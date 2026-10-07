@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-10-07 00:01:02 UTC",
+  "generated_at": "2026-10-07 04:25:53 UTC",
   "cloudflare_range_source": "live",
   "cloudflare_only": true,
   "counts": {
     "ct": 26,
-    "cu": 50,
+    "cu": 65,
     "cmcc": 26,
-    "all": 134
+    "all": 154
   },
   "healthy_sources": 20,
   "failed_sources": 0,
@@ -89,7 +89,7 @@
       "name": "ZhiXuan 镜像",
       "url": "https://addressesapi.090227.xyz/ip.164746.xyz",
       "ok": true,
-      "count": 1,
+      "count": 2,
       "error": ""
     },
     {
