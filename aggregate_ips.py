@@ -255,6 +255,11 @@ def classify_carrier(item):
     return None
 
 
+def has_slow_reported_speed(item):
+    match = re.search(r"(\d+(?:\.\d+)?)\s*mb/s\b", item.get("tag", ""), re.IGNORECASE)
+    return bool(match and float(match.group(1)) < 1.0)
+
+
 def round_robin_merge(pools, limit):
     merged = []
     seen = set()
@@ -463,6 +468,12 @@ def main():
         results["all"] = load_previous("all")
         print(f"[all] all sources failed; kept {len(results['all'])} previous item(s)")
 
+    quality_items = [item for item in results["all"] if not has_slow_reported_speed(item)]
+    filtered_slow = len(results["all"]) - len(quality_items) if len(quality_items) >= 70 else 0
+    if filtered_slow:
+        results["all"] = quality_items
+        print(f"[all] filtered {filtered_slow} IP(s) with reported speed below 1 MB/s")
+
     status = {
         "generated_at": utc_now(),
         "cloudflare_range_source": cf_range_source,
@@ -470,6 +481,7 @@ def main():
         "counts": {group: len(items) for group, items in results.items()},
         "healthy_sources": sum(1 for item in source_status if item["ok"]),
         "failed_sources": sum(1 for item in source_status if not item["ok"]),
+        "filtered_slow": filtered_slow,
         "sources": source_status,
     }
 
