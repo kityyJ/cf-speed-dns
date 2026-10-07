@@ -41,7 +41,7 @@ Cloudflare 三网优选 IP 聚合池。
 /ct?ips=6
 /cu?ips=6
 /cmcc?ips=8
-/all?ips=20
+/all?ips=70
 
 /ct?ips=20&format=json
 /cu?ips=20&format=json
@@ -51,7 +51,7 @@ Cloudflare 三网优选 IP 聚合池。
 /health
 ```
 
-`ips` 范围为 1–100。
+`ips` 范围为 1–300；不传时默认返回 70 条。
 
 ## 数据来源
 
