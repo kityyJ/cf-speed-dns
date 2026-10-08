@@ -1,16 +1,16 @@
 {
-  "generated_at": "2026-10-08 17:34:09 UTC",
+  "generated_at": "2026-10-08 22:23:48 UTC",
   "cloudflare_range_source": "live",
   "cloudflare_only": true,
   "counts": {
     "ct": 26,
     "cu": 120,
     "cmcc": 26,
-    "all": 124
+    "all": 137
   },
   "healthy_sources": 20,
   "failed_sources": 0,
-  "filtered_slow": 86,
+  "filtered_slow": 69,
   "sources": [
     {
       "group": "ct",
@@ -81,7 +81,7 @@
       "name": "CM CloudFlareYes",
       "url": "https://addressesapi.090227.xyz/CloudFlareYes",
       "ok": true,
-      "count": 10,
+      "count": 15,
       "error": ""
     },
     {
@@ -90,7 +90,7 @@
       "name": "ZhiXuan 镜像",
       "url": "https://addressesapi.090227.xyz/ip.164746.xyz",
       "ok": true,
-      "count": 2,
+      "count": 1,
       "error": ""
     },
     {
