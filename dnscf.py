@@ -5,12 +5,15 @@ The upstream pools supply the carrier rankings. Connectivity checks from a
 GitHub runner are only an availability guard, not a China-network speed test.
 """
 
+import http.client
 import ipaddress
 import json
 import os
 import re
 import socket
+import ssl
 import sys
+import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -127,8 +130,15 @@ def candidate_rank(item, index):
     rtt, speed = reported_metrics(item)
     if speed is not None and speed < 1.0:
         return None  # A low RTT with almost no throughput is not a good endpoint.
-    if rtt is not None and 0 < rtt <= 180:
-        return (0, rtt, index)
+    if rtt is not None and 0 < rtt <= 300:
+        # Chinese carrier/source measurements matter more than US runner latency.
+        # A bounded throughput bonus avoids choosing a slow-download IP solely
+        # because it advertises a slightly lower RTT. Unknown speed earns no bonus.
+        throughput_bonus = 3.0 * min(max(speed, 0.0), 25.0) if speed is not None else 0.0
+        return (0, round(rtt - throughput_bonus, 3), index)
+    if speed is not None:
+        # A verified download figure without RTT is better evidence than geography.
+        return (1, -min(speed, 100.0), index)
     label = (str(item.get("tag", "")) + " " + str(item.get("source", ""))).upper()
     if any(token in label for token in ("HKG", "HONG KONG", "香港")):
         region = 0
@@ -142,7 +152,7 @@ def candidate_rank(item, index):
         region = 6
     else:
         region = 4
-    return (1, region, index)
+    return (2, region, index)
 
 
 def pick_ips(pools, count, networks, probe=None):
@@ -220,6 +230,73 @@ def tcp_reachable(ip, timeout=2.0):
     except OSError:
         return False
 
+
+
+def limit_rotation(records, desired, max_changes=6):
+    """Keep a working 30-address pool stable; replace at most N IPs per run.
+
+    Initial provisioning, and size repairs, are allowed to complete immediately.
+    This is DNS-pool stability, NOT proof that retained IPs work for all visitors.
+    """
+    if not 0 <= max_changes <= 30:
+        raise DnsSyncError("CF_DNS_MAX_ROTATIONS must be between 0 and 30")
+    if not records or len(records) != len(desired):
+        return desired
+    current = [rec["content"] for rec in records]
+    current_set = set(current)
+    target_set = set(desired)
+    incoming = [ip for ip in desired if ip not in current_set]
+    if len(incoming) <= max_changes:
+        return desired
+    retained = [ip for ip in current if ip not in target_set]
+    unchanged = [ip for ip in desired if ip in current_set]
+    result = unchanged + incoming[:max_changes] + retained[:len(retained) - max_changes]
+    if len(result) != len(desired) or len(set(result)) != len(result):
+        raise DnsSyncError("DNS rotation produced duplicates or wrong record count")
+    print(f"Gradual rollout: {len(incoming)} replacements requested, "
+          f"applying up to {max_changes}; {len(retained) - max_changes} kept until later checks")
+    return result
+
+
+def audit_site_https(ip, hostname, path="/", timeout=4.0):
+    """Check a given HTTPS site's TLS SNI, Host and response on a forced IP.
+
+    Only audits compatibility from the GitHub runner; TTFB is NOT a CN-carrier
+    benchmark. This audit does not influence production DNS selection.
+    """
+    hostname = hostname.strip().lower().rstrip(".")
+    if not 1 <= len(hostname) <= 253 or not re.fullmatch(r"[a-z0-9.-]+", hostname):
+        raise DnsSyncError("Invalid CF_DNS_SITE_AUDIT_HOST")
+    if not path.startswith("/") or any(ch in path for ch in (" ", "\r", "\n")):
+        raise DnsSyncError("CF_DNS_SITE_AUDIT_PATH must be a safe URL path")
+    started = time.monotonic()
+    try:
+        with socket.create_connection((ip, 443), timeout=timeout) as tcp:
+            connected = time.monotonic()
+            with ssl.create_default_context().wrap_socket(tcp, server_hostname=hostname) as tls:
+                secured = time.monotonic()
+                tls.settimeout(timeout)
+                request = (
+                    f"GET {path} HTTP/1.1\r\n"
+                    f"Host: {hostname}\r\n"
+                    "User-Agent: cook-speed-dns/2.1\r\n"
+                    "Accept-Encoding: identity\r\n"
+                    "Connection: close\r\n\r\n"
+                )
+                tls.sendall(request.encode("ascii"))
+                response = http.client.HTTPResponse(tls)
+                response.begin()
+                header_received = time.monotonic()
+                status = response.status
+                response.close()
+                return {
+                    "ip": ip, "ok": 200 <= status < 400, "status": status,
+                    "tcp_ms": round(1000 * (connected - started), 1),
+                    "tls_ms": round(1000 * (secured - connected), 1),
+                    "response_header_ms": round(1000 * (header_received - started), 1),
+                }
+    except (OSError, ssl.SSLError, http.client.HTTPException, ValueError) as exc:
+        return {"ip": ip, "ok": False, "error": type(exc).__name__}
 
 
 def sync_dns(session, zone_id, dns_name, token, records, desired):
@@ -318,6 +395,25 @@ def main():
     probe = tcp_reachable if check_enabled else None
     desired = pick_ips(pools, count, networks, probe=probe)
     print(f"Selected IPs (CT/CU/CMCC first): {', '.join(desired)}")
+    # Optional website-specific checks are diagnostics until a real mainland
+    # probe is available; NEVER use a US runner's TTFB as a CN speed ranking.
+    audit_host = os.environ.get("CF_DNS_SITE_AUDIT_HOST", "").strip()
+    if audit_host:
+        audit_path = os.environ.get("CF_DNS_SITE_AUDIT_PATH", "/")
+        try:
+            audit_count = int(os.environ.get("CF_DNS_SITE_AUDIT_COUNT", "3"))
+        except ValueError as exc:
+            raise DnsSyncError("CF_DNS_SITE_AUDIT_COUNT must be an integer") from exc
+        if not 1 <= audit_count <= 6:
+            raise DnsSyncError("CF_DNS_SITE_AUDIT_COUNT must be between 1 and 6")
+        for ip in desired[:audit_count]:
+            print(f"Website HTTPS audit (GitHub runner; not CN speed): "
+                  f"{audit_host} via {audit_site_https(ip, audit_host, audit_path)}")
+    try:
+        max_changes = int(os.environ.get("CF_DNS_MAX_ROTATIONS", "6"))
+    except ValueError as exc:
+        raise DnsSyncError("CF_DNS_MAX_ROTATIONS must be an integer") from exc
+    desired = limit_rotation(records, desired, max_changes=max_changes)
     updates = sync_dns(session, zone_id, dns_name, token, records, desired)
     pushplus(f"{dns_name}: {len(updates)} DNS changes, {count - len(updates)} unchanged. IPs: {', '.join(desired)}")
 
