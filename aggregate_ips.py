@@ -246,9 +246,9 @@ def classify_carrier(item):
     """根据来源标签把全量池结果补充回三网分类。"""
     text = f"{item.get('tag', '')} {item.get('source', '')}".upper()
 
-    if "电信" in text or "CTCC" in text or re.search(r"\\bCT\\b", text):
+    if "电信" in text or "CTCC" in text or re.search(r"\bCT\b", text):
         return "ct"
-    if "联通" in text or "CUCC" in text or "UNICOM" in text or re.search(r"\\bCU\\b", text):
+    if "联通" in text or "CUCC" in text or "UNICOM" in text or re.search(r"\bCU\b", text):
         return "cu"
     if "移动" in text or "CMCC" in text or "MOBILE" in text:
         return "cmcc"
