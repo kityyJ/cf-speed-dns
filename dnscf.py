@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Sync validated, carrier-diverse Cloudflare IPs into existing DNS A records.
+"""Sync validated, carrier-balanced Cloudflare IPs into DNS A records.
 
 The upstream pools supply the carrier rankings. Connectivity checks from a
 GitHub runner are only an availability guard, not a China-network speed test.
@@ -107,46 +107,55 @@ def valid_cf_ip(item, networks):
 
 
 def pick_ips(pools, count, networks, probe=None):
-    """Prefer one IP per carrier; fill from all sources, dedupe and verify."""
+    """Round-robin carrier pools, then fill from all sources; avoid duplicate IPs."""
     selected = []
     seen = set()
     checked = {}
+    indexes = {"ct": 0, "cu": 0, "cmcc": 0}
 
-    def add_first(group):
-        for item in pools[group]:
-            ip = valid_cf_ip(item, networks)
-            if not ip or ip in seen:
-                continue
-            if ip not in checked:
-                checked[ip] = True if probe is None else probe(ip)
-            if not checked[ip]:
-                continue
-            seen.add(ip)
-            selected.append(ip)
-            return True
-        return False
+    def try_add(item):
+        ip = valid_cf_ip(item, networks)
+        if not ip or ip in seen:
+            return False
+        if ip not in checked:
+            checked[ip] = True if probe is None else probe(ip)
+        if not checked[ip]:
+            return False
+        seen.add(ip)
+        selected.append(ip)
+        return True
 
-    for group in ("ct", "cu", "cmcc"):
-        if len(selected) >= count:
-            break
-        add_first(group)
-    if len(selected) < count:
-        for group in ("all", "ct", "cu", "cmcc"):
-            for item in pools[group]:
-                if len(selected) >= count:
+    # Take turns selecting CT, CU and CMCC so 60 addresses favor 20 per carrier.
+    carriers = ("ct", "cu", "cmcc")
+    while len(selected) < count:
+        progress = False
+        for group in carriers:
+            entries = pools[group]
+            while indexes[group] < len(entries):
+                item = entries[indexes[group]]
+                indexes[group] += 1
+                if try_add(item):
+                    progress = True
                     break
-                ip = valid_cf_ip(item, networks)
-                if not ip or ip in seen:
-                    continue
-                if ip not in checked:
-                    checked[ip] = True if probe is None else probe(ip)
-                if checked[ip]:
-                    seen.add(ip)
-                    selected.append(ip)
             if len(selected) >= count:
                 break
+        if not progress:
+            break
+
+    # If carrier-specific sources have insufficient reachable addresses, use
+    # vetted global candidates, then unused items from carrier pools.
+    for group in ("all", "ct", "cu", "cmcc"):
+        if len(selected) >= count:
+            break
+        for item in pools[group]:
+            if len(selected) >= count:
+                break
+            try_add(item)
     if len(selected) < count:
-        raise DnsSyncError(f"Only {len(selected)} valid and reachable IPs for {count} DNS records; no changes made")
+        raise DnsSyncError(
+            f"Only {len(selected)} valid/reachable unique IPs for {count} DNS records; "
+            "no changes made"
+        )
     return selected
 
 
@@ -159,13 +168,22 @@ def tcp_reachable(ip, timeout=2.0):
 
 
 def sync_dns(session, zone_id, dns_name, token, records, desired):
-    """Keep matching records unchanged; PATCH only addresses needing replacement."""
+    """Reconcile A records without deleting existing entries or toggling proxy mode."""
     if not records:
-        raise DnsSyncError(f"No existing A records for {dns_name}; refusing to create an unexpected DNS name")
-    if len(records) != len(desired):
-        raise DnsSyncError("Candidate IP count does not match DNS A record count")
-    if any(rec.get("proxied") is True for rec in records):
-        raise DnsSyncError("Some A records are proxied; disable the orange cloud before using CF edge IPs")
+        raise DnsSyncError(
+            f"No existing A records for {dns_name}; refusing to create an unexpected DNS name"
+        )
+    if len(records) > len(desired):
+        raise DnsSyncError(
+            f"{dns_name} has {len(records)} A records, exceeding configured target "
+            f"{len(desired)}; refusing automatic deletion"
+        )
+    if len(set(desired)) != len(desired):
+        raise DnsSyncError("Duplicate candidate IPs; refusing to change DNS")
+    if any(rec.get("proxied") is not False for rec in records):
+        raise DnsSyncError(
+            "All A records must have DNS Only (gray cloud) mode to use CF edge IPs"
+        )
 
     matched_ids = set()
     matched_ips = set()
@@ -175,16 +193,30 @@ def sync_dns(session, zone_id, dns_name, token, records, desired):
                 matched_ids.add(rec["id"])
                 matched_ips.add(ip)
                 break
-    remaining_records = [rec for rec in records if rec["id"] not in matched_ids]
-    remaining_ips = [ip for ip in desired if ip not in matched_ips]
+
+    unused_existing = [rec for rec in records if rec["id"] not in matched_ids]
+    pending_ips = [ip for ip in desired if ip not in matched_ips]
     updates = []
-    for rec, ip in zip(remaining_records, remaining_ips):
+
+    # Reuse all existing records, and add new A records for the remaining IPs.
+    for rec, ip in zip(unused_existing, pending_ips):
         cf_api(
             session, "PATCH", f"/zones/{zone_id}/dns_records/{rec['id']}", token,
             json={"content": ip},
         )
         updates.append((rec.get("content"), ip))
         print(f"Updated {dns_name}: {rec.get('content')} -> {ip}")
+    for ip in pending_ips[len(unused_existing):]:
+        cf_api(
+            session, "POST", f"/zones/{zone_id}/dns_records", token,
+            json={
+                "type": "A", "name": dns_name, "content": ip, "ttl": 1,
+                "proxied": False, "comment": "Managed by cf-speed-dns",
+            },
+        )
+        updates.append((None, ip))
+        print(f"Created {dns_name}: {ip}")
+
     if not updates:
         print(f"{dns_name}: {len(desired)} IPs are already current; no DNS changes")
     return updates
@@ -219,7 +251,19 @@ def main():
     records = dns_records(session, zone_id, dns_name, token)
     if not records:
         raise DnsSyncError(f"No A records found for {dns_name}")
-    print(f"Checking {len(records)} existing A records for {dns_name}")
+    target = os.environ.get("CF_DNS_RECORD_COUNT", "").strip()
+    try:
+        count = int(target) if target else len(records)
+    except ValueError as exc:
+        raise DnsSyncError("CF_DNS_RECORD_COUNT must be an integer") from exc
+    if not 1 <= count <= 60:
+        raise DnsSyncError("CF_DNS_RECORD_COUNT must be between 1 and 60")
+    if len(records) > count:
+        raise DnsSyncError(
+            f"Found {len(records)} existing records, but target is {count}; "
+            "automatic record deletion is disabled"
+        )
+    print(f"Checking {len(records)} existing A records for {dns_name}, target={count}")
 
     load_status()
     networks, source = fetch_cf_networks(session, 10)
@@ -227,10 +271,10 @@ def main():
     pools = {group: load_pool(group) for group in ("ct", "cu", "cmcc", "all")}
     check_enabled = os.environ.get("CF_DNS_TCP_CHECK", "1") not in ("0", "false", "no")
     probe = tcp_reachable if check_enabled else None
-    desired = pick_ips(pools, len(records), networks, probe=probe)
+    desired = pick_ips(pools, count, networks, probe=probe)
     print(f"Selected IPs (CT/CU/CMCC first): {', '.join(desired)}")
     updates = sync_dns(session, zone_id, dns_name, token, records, desired)
-    pushplus(f"{dns_name}: {len(updates)} updated, {len(records) - len(updates)} unchanged. IPs: {', '.join(desired)}")
+    pushplus(f"{dns_name}: {len(updates)} DNS changes, {count - len(updates)} unchanged. IPs: {', '.join(desired)}")
 
 
 if __name__ == "__main__":
