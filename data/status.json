@@ -1,16 +1,16 @@
 {
-  "generated_at": "2026-10-12 02:18:57 UTC",
+  "generated_at": "2026-10-12 03:50:13 UTC",
   "cloudflare_range_source": "live",
   "cloudflare_only": true,
   "counts": {
-    "ct": 51,
+    "ct": 54,
     "cu": 120,
     "cmcc": 51,
-    "all": 209
+    "all": 211
   },
   "healthy_sources": 20,
   "failed_sources": 0,
-  "filtered_slow": 70,
+  "filtered_slow": 67,
   "sources": [
     {
       "group": "ct",
@@ -81,7 +81,7 @@
       "name": "CM CloudFlareYes",
       "url": "https://addressesapi.090227.xyz/CloudFlareYes",
       "ok": true,
-      "count": 10,
+      "count": 15,
       "error": ""
     },
     {
