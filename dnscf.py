@@ -299,6 +299,22 @@ def audit_site_https(ip, hostname, path="/", timeout=4.0):
         return {"ip": ip, "ok": False, "error": type(exc).__name__}
 
 
+def compatible_with_sites(ip, hosts, path="/", checker=None):
+    """Gate new CDN IPs on every site's real TLS/SNI/HTTP compatibility.
+
+    This checks function, not mainland-China speed. Never write DNS here.
+    """
+    checker = checker or audit_site_https
+    if not hosts:
+        raise DnsSyncError("HTTPS site compatibility check requires a hostname")
+    for host in hosts:
+        outcome = checker(ip, host, path)
+        if not outcome.get("ok"):
+            print(f"Rejected candidate {ip}: {host} HTTPS compatibility {outcome}")
+            return False
+    return True
+
+
 def sync_dns(session, zone_id, dns_name, token, records, desired):
     """Update, create or remove only exact-name DNS-only A records."""
     if not records and (dns_name != "cdn.jia.nz" or len(desired) != 30):
@@ -394,18 +410,18 @@ def main():
     check_enabled = os.environ.get("CF_DNS_TCP_CHECK", "1") not in ("0", "false", "no")
     audit_host = os.environ.get("CF_DNS_SITE_AUDIT_HOST", "").strip()
     audit_path = os.environ.get("CF_DNS_SITE_AUDIT_PATH", "/")
+    extra_hosts = [
+        host.strip() for host in os.environ.get("CF_DNS_SITE_VERIFY_EXTRA_HOSTS", "").split(",")
+        if host.strip()
+    ]
+    site_hosts = list(dict.fromkeys(([audit_host] if audit_host else []) + extra_hosts))
     site_verify = os.environ.get("CF_DNS_SITE_VERIFY", "0").lower() in ("1", "true", "yes")
     if site_verify and not audit_host:
         raise DnsSyncError("CF_DNS_SITE_VERIFY requires CF_DNS_SITE_AUDIT_HOST")
     if site_verify:
-        # Site TLS/Host validation is a compatibility guard, not a speed score.
-        # If too few valid HTTPS endpoints remain, pick_ips aborts without DNS edits.
-        def site_compatible(ip):
-            result = audit_site_https(ip, audit_host, audit_path)
-            if not result["ok"]:
-                print(f"Rejected candidate {ip}: HTTPS site compatibility {result}")
-            return result["ok"]
-        probe = site_compatible
+        # Verify TLS/Host and web response for ALL sites using the shared CDN.
+        # If fewer than 30 compatible candidates remain, abort without DNS edits.
+        probe = lambda ip: compatible_with_sites(ip, site_hosts, audit_path)
     else:
         probe = tcp_reachable if check_enabled else None
     desired = pick_ips(pools, count, networks, probe=probe)
@@ -419,9 +435,10 @@ def main():
             raise DnsSyncError("CF_DNS_SITE_AUDIT_COUNT must be an integer") from exc
         if not 1 <= audit_count <= 6:
             raise DnsSyncError("CF_DNS_SITE_AUDIT_COUNT must be between 1 and 6")
-        for ip in desired[:audit_count]:
-            print(f"Website HTTPS audit (GitHub runner; not CN speed): "
-                  f"{audit_host} via {audit_site_https(ip, audit_host, audit_path)}")
+        for host in site_hosts:
+            for ip in desired[:audit_count]:
+                print(f"Website HTTPS audit (GitHub runner; not CN speed): "
+                      f"{host} via {audit_site_https(ip, host, audit_path)}")
     try:
         max_changes = int(os.environ.get("CF_DNS_MAX_ROTATIONS", "6"))
     except ValueError as exc:
