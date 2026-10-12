@@ -80,6 +80,28 @@ class DNSTests(unittest.TestCase):
             sync_dns(FakeSession([FakeResponse({}, False)]),
                      "zone", "cdn.jia.nz", "token", records, ["104.17.1.2"])
 
+    def test_creates_missing_records(self):
+        records = [{"id": "a", "content": "104.17.1.1", "proxied": False}]
+        sess = FakeSession([FakeResponse({}), FakeResponse({})])
+        changes = sync_dns(sess, "zone", "cdn.jia.nz", "token", records,
+                           ["104.17.1.2", "104.17.1.3"])
+        self.assertEqual(len(changes), 2)
+        self.assertEqual([call[0] for call in sess.calls], ["PATCH", "POST"])
+        self.assertEqual(sess.calls[1][2]["json"]["proxied"], False)
+        self.assertEqual(sess.calls[1][2]["json"]["content"], "104.17.1.3")
+
+    def test_sixty_carrier_balanced_candidates(self):
+        ips = [f"104.17.{n // 250}.{n % 250 + 1}" for n in range(180)]
+        pools = {
+            "ct": [row(ip) for ip in ips[:60]],
+            "cu": [row(ip) for ip in ips[60:120]],
+            "cmcc": [row(ip) for ip in ips[120:180]],
+            "all": [],
+        }
+        result = pick_ips(pools, 60, NETWORKS, probe=lambda ip: True)
+        self.assertEqual(len(set(result)), 60)
+        self.assertEqual(result[:3], [ips[0], ips[60], ips[120]])
+
     def test_proxy_mode_is_protected(self):
         records = [{"id": "a", "content": "104.17.1.1", "proxied": True}]
         with self.assertRaises(DnsSyncError):
