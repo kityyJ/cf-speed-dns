@@ -1,0 +1,31 @@
+name: Test DNS updater
+
+on:
+  pull_request:
+    paths:
+      - "dnscf.py"
+      - "aggregate_ips.py"
+      - "tests/**"
+      - ".github/workflows/test_dns.yml"
+  push:
+    branches: ["main"]
+    paths:
+      - "dnscf.py"
+      - "aggregate_ips.py"
+      - "tests/**"
+      - ".github/workflows/test_dns.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - run: python -m compileall -q dnscf.py aggregate_ips.py tests
+      - run: python -m unittest discover -s tests -v
