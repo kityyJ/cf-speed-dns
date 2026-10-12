@@ -5,7 +5,7 @@ env:
 
 on:
   schedule:
-    - cron: "0 */6 * * *"
+    - cron: "12,42 * * * *"
   workflow_dispatch:
 
 permissions:
@@ -40,6 +40,6 @@ jobs:
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CF_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
           CF_DNS_NAME: ${{ secrets.CF_DNS_NAME }}
-          CF_DNS_RECORD_COUNT: "60"
+          CF_DNS_RECORD_COUNT: "30"
           PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
         run: python dnscf.py
