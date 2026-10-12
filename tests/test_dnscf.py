@@ -1,7 +1,8 @@
 import ipaddress
 import unittest
+from unittest.mock import patch
 
-from dnscf import DnsSyncError, candidate_rank, dns_records, pick_ips, sync_dns
+from dnscf import DnsSyncError, audit_site_https, candidate_rank, dns_records, limit_rotation, pick_ips, sync_dns
 
 NETWORKS = [ipaddress.ip_network("104.16.0.0/13"), ipaddress.ip_network("162.158.0.0/15")]
 
@@ -112,6 +113,63 @@ class DNSTests(unittest.TestCase):
                     "tag": "48.2ms | 30mb/s"}
         unknown = {"ip": "104.17.1.3", "port": 443, "tag": "HKG"}
         self.assertLess(candidate_rank(measured, 5), candidate_rank(unknown, 0))
+
+    def test_fast_download_can_outweigh_small_latency_advantage(self):
+        slow = {"ip": "104.17.1.1", "port": 443, "tag": "65ms | 1mb/s"}
+        fast = {"ip": "104.17.1.2", "port": 443, "tag": "108ms | 25mb/s"}
+        self.assertLess(candidate_rank(fast, 1), candidate_rank(slow, 0))
+
+    def test_reported_speed_without_rtt_beats_geo_only(self):
+        measured = {"tag": "20mb/s"}
+        unmeasured = {"tag": "HKG"}
+        self.assertLess(candidate_rank(measured, 1), candidate_rank(unmeasured, 0))
+
+    def test_dns_rotation_limits_replacements(self):
+        old = [f"104.17.1.{i + 1}" for i in range(30)]
+        desired = [f"104.17.2.{i + 1}" for i in range(30)]
+        records = [{"content": ip} for ip in old]
+        result = limit_rotation(records, desired, max_changes=6)
+        self.assertEqual(len(result), 30)
+        self.assertEqual(len(set(result)), 30)
+        self.assertEqual(len(set(result) - set(old)), 6)
+        self.assertEqual(len(set(result) & set(old)), 24)
+        self.assertEqual(len(set(result) & set(desired)), 6)
+
+    def test_dns_rotation_skips_incomplete_pool(self):
+        records = [{"content": "104.17.1.1"}]
+        desired = ["104.17.1.1", "104.17.1.2"]
+        self.assertEqual(limit_rotation(records, desired, max_changes=0), desired)
+
+    def test_dns_rotation_rejects_invalid_limit(self):
+        with self.assertRaises(DnsSyncError):
+            limit_rotation([], ["104.17.1.1"], max_changes=31)
+
+    def test_https_audit_rejects_unsafe_host_or_path(self):
+        with self.assertRaises(DnsSyncError):
+            audit_site_https("104.17.1.1", "example.com\r\nX: injected")
+        with self.assertRaises(DnsSyncError):
+            audit_site_https("104.17.1.1", "example.com", "/\r\nHost: injected")
+
+    def test_https_audit_network_failure_is_nonfatal(self):
+        with patch("dnscf.socket.create_connection", side_effect=OSError("offline")):
+            result = audit_site_https("104.17.1.1", "cook.jia.nz")
+        self.assertEqual(result, {"ip": "104.17.1.1", "ok": False, "error": "OSError"})
+
+    def test_https_audit_preserves_tls_sni_and_http_host(self):
+        with patch("dnscf.socket.create_connection") as connect, \
+             patch("dnscf.ssl.create_default_context") as context, \
+             patch("dnscf.http.client.HTTPResponse") as reply:
+            raw = connect.return_value.__enter__.return_value
+            secure = context.return_value.wrap_socket.return_value.__enter__.return_value
+            reply.return_value.status = 200
+            result = audit_site_https("104.17.1.1", "cook.jia.nz", "/")
+            context.return_value.wrap_socket.assert_called_once_with(
+                raw, server_hostname="cook.jia.nz")
+            sent = secure.sendall.call_args.args[0]
+            self.assertIn(b"Host: cook.jia.nz\r\n", sent)
+            self.assertIn(b"GET / HTTP/1.1\r\n", sent)
+            self.assertTrue(result["ok"])
+            self.assertEqual(result["status"], 200)
 
     def test_shrink_to_thirty_dns_records(self):
         records = [
