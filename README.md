@@ -1,4 +1,4 @@
-# cook-dnscf
+# cook-speed
 
 Cloudflare 三网优选 IP 聚合池。
 
