@@ -86,7 +86,8 @@ Cloudflare 三网优选 IP 聚合池。
 
 1. 临时刷新最新 IP 池
 2. 从本地 `ipTop10.html` 读取优选 IP
-3. 更新 `CF_DNS_NAME` 对应的 A 记录
+3. 电信、联通、移动轮询取候选 IP，进行去重、Cloudflare 网段与 TCP 443 连通性检查
+4. 更新 `CF_DNS_NAME` 对应的 A 记录，记录不足时自动补齐至 60 条（DNS Only）
 
 需要 Secrets：
 
@@ -95,6 +96,7 @@ CF_API_TOKEN
 CF_ZONE_ID
 CF_DNS_NAME
 PUSHPLUS_TOKEN   # 可选
+CF_DNS_RECORD_COUNT # 工作流已配置 60，可设置为 1–60（默认使用现有记录数）
 ```
 
 ## DNSPod
@@ -129,3 +131,12 @@ data/status.json
 ## 说明
 
 这套机制是“聚合已经由不同网络环境持续测速维护的结果”，不是用 GitHub Actions Runner 自己模拟中国电信、联通、移动测速。GitHub Runner 的网络位置无法代表三大运营商实际用户，因此三网分类以对应数据源为准。
+
+## 页面与 60 条解析记录
+
+- GitHub Pages: https://kityyj.github.io/cf-speed-dns/
+- 页面“当前 DNS 解析 IP”通过公网 DoH 查询 `cdn.jia.nz`，展示实际返回的 A 记录（可能有解析缓存）。
+- 页面“最新榜首”显示聚合池的三网候选 IP；它们不必与当前 DNS 完全一致。
+- `dns_cf.yml` 在每次运行时以 `CF_DNS_RECORD_COUNT=60` 为目标，自动增加缺失 A 记录，不自动删除超额记录或开启 Cloudflare 代理。
+- DNS 记录创建和更新都依赖 GitHub Secrets 中具有 DNS 编辑权限的 Cloudflare API Token。
+- **注意：** 60 条 A 记录不是速度评分或智能负载均衡；DNS 响应会变大，部分客户端或递归解析器可能截断返回，客户端也不一定选最快地址。GitHub Runner 的 TCP 测试不能代表中国三网实际速度。
