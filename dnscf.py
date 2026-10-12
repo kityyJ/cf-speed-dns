@@ -8,6 +8,7 @@ GitHub runner are only an availability guard, not a China-network speed test.
 import ipaddress
 import json
 import os
+import re
 import socket
 import sys
 from datetime import datetime, timedelta, timezone
@@ -106,56 +107,109 @@ def valid_cf_ip(item, networks):
         return None
 
 
+
+def reported_metrics(item):
+    """Read upstream-reported RTT and throughput from descriptive IP tags."""
+    tag = str(item.get("tag", ""))
+    latency = re.search(r"(?<!\d)(\d+(?:\.\d+)?)\s*ms\b", tag, re.IGNORECASE)
+    speed = re.search(r"(?<!\d)(\d+(?:\.\d+)?)\s*mb/s\b", tag, re.IGNORECASE)
+    rtt_ms = float(latency.group(1)) if latency else None
+    speed_mb = float(speed.group(1)) if speed else None
+    return rtt_ms, speed_mb
+
+
+def candidate_rank(item, index):
+    """Prefer measured, usable low RTT; then geographically plausible CN routes.
+
+    Missing RTT is not treated as zero RTT. Upstream measurements come from
+    their own probes, not GitHub Actions runners or the end user's network.
+    """
+    rtt, speed = reported_metrics(item)
+    if speed is not None and speed < 1.0:
+        return None  # A low RTT with almost no throughput is not a good endpoint.
+    if rtt is not None and 0 < rtt <= 180:
+        return (0, rtt, index)
+    label = (str(item.get("tag", "")) + " " + str(item.get("source", ""))).upper()
+    if any(token in label for token in ("HKG", "HONG KONG", "香港")):
+        region = 0
+    elif any(token in label for token in ("TPE", "TWN", "TAIPEI", "台湾")):
+        region = 1
+    elif any(token in label for token in ("NRT", "TYO", "TOKYO", "日本", "东京")):
+        region = 2
+    elif any(token in label for token in ("SIN", "SINGAPORE", "新加坡")):
+        region = 3
+    elif any(token in label for token in ("LAX", "SJC", "SFO", "FRA", "LHR")):
+        region = 6
+    else:
+        region = 4
+    return (1, region, index)
+
+
 def pick_ips(pools, count, networks, probe=None):
-    """Round-robin carrier pools, then fill from all sources; avoid duplicate IPs."""
+    """Select low-latency candidates, 1/3 per China carrier when possible."""
+    carriers = ("ct", "cu", "cmcc")
+    quota = {carrier: count // 3 + (i < count % 3)
+             for i, carrier in enumerate(carriers)}
+    ordered = {}
+    for group in (*carriers, "all"):
+        candidates = []
+        for index, item in enumerate(pools[group]):
+            rank = candidate_rank(item, index)
+            if rank is not None:
+                candidates.append((rank, item))
+        ordered[group] = [item for _, item in sorted(candidates, key=lambda p: p[0])]
+
     selected = []
     seen = set()
     checked = {}
-    indexes = {"ct": 0, "cu": 0, "cmcc": 0}
+    chosen_by_carrier = dict.fromkeys(carriers, 0)
+    cursors = dict.fromkeys(carriers, 0)
 
-    def try_add(item):
+    def try_add(item, carrier=None):
         ip = valid_cf_ip(item, networks)
         if not ip or ip in seen:
             return False
         if ip not in checked:
-            checked[ip] = True if probe is None else probe(ip)
+            checked[ip] = bool(probe(ip)) if probe is not None else True
         if not checked[ip]:
             return False
         seen.add(ip)
         selected.append(ip)
+        if carrier:
+            chosen_by_carrier[carrier] += 1
         return True
 
-    # Take turns selecting CT, CU and CMCC so 60 addresses favor 20 per carrier.
-    carriers = ("ct", "cu", "cmcc")
-    while len(selected) < count:
-        progress = False
+    # Interleave low-RTT candidates across CT / CU / CMCC to avoid single-network bias.
+    while len(selected) < count and any(chosen_by_carrier[g] < quota[g] for g in carriers):
+        advanced = False
         for group in carriers:
-            entries = pools[group]
-            while indexes[group] < len(entries):
-                item = entries[indexes[group]]
-                indexes[group] += 1
-                if try_add(item):
-                    progress = True
+            if chosen_by_carrier[group] >= quota[group]:
+                continue
+            while cursors[group] < len(ordered[group]):
+                item = ordered[group][cursors[group]]
+                cursors[group] += 1
+                if try_add(item, group):
+                    advanced = True
                     break
             if len(selected) >= count:
                 break
-        if not progress:
+        if not advanced:
             break
 
-    # If carrier-specific sources have insufficient reachable addresses, use
-    # vetted global candidates, then unused items from carrier pools.
-    for group in ("all", "ct", "cu", "cmcc"):
-        if len(selected) >= count:
-            break
-        for item in pools[group]:
+    # A carrier may have fewer usable IPs; borrow from other carrier pools and all.
+    for group in (*carriers, "all"):
+        for item in ordered[group]:
             if len(selected) >= count:
                 break
             try_add(item)
+        if len(selected) >= count:
+            break
+
     if len(selected) < count:
         raise DnsSyncError(
-            f"Only {len(selected)} valid/reachable unique IPs for {count} DNS records; "
-            "no changes made"
+            f"Only {len(selected)} validated IPs for a target of {count}; DNS unchanged"
         )
+    print(f"Carrier priorities: {chosen_by_carrier}; unknown RTT stays unscored")
     return selected
 
 
@@ -167,23 +221,20 @@ def tcp_reachable(ip, timeout=2.0):
         return False
 
 
+
 def sync_dns(session, zone_id, dns_name, token, records, desired):
-    """Reconcile A records without deleting existing entries or toggling proxy mode."""
+    """Update, create or remove only exact-name DNS-only A records."""
     if not records:
-        raise DnsSyncError(
-            f"No existing A records for {dns_name}; refusing to create an unexpected DNS name"
-        )
-    if len(records) > len(desired):
-        raise DnsSyncError(
-            f"{dns_name} has {len(records)} A records, exceeding configured target "
-            f"{len(desired)}; refusing automatic deletion"
-        )
+        raise DnsSyncError(f"No existing A records for {dns_name}; refusing to create DNS blindly")
     if len(set(desired)) != len(desired):
         raise DnsSyncError("Duplicate candidate IPs; refusing to change DNS")
-    if any(rec.get("proxied") is not False for rec in records):
-        raise DnsSyncError(
-            "All A records must have DNS Only (gray cloud) mode to use CF edge IPs"
-        )
+    if any(
+        rec.get("proxied") is not False
+        or rec.get("name", dns_name) != dns_name
+        or rec.get("type", "A") != "A"
+        for rec in records
+    ):
+        raise DnsSyncError("Unexpected record name/type or orange-cloud proxy; DNS untouched")
 
     matched_ids = set()
     matched_ips = set()
@@ -194,32 +245,31 @@ def sync_dns(session, zone_id, dns_name, token, records, desired):
                 matched_ips.add(ip)
                 break
 
-    unused_existing = [rec for rec in records if rec["id"] not in matched_ids]
-    pending_ips = [ip for ip in desired if ip not in matched_ips]
-    updates = []
+    unused = [rec for rec in records if rec["id"] not in matched_ids]
+    missing_ips = [ip for ip in desired if ip not in matched_ips]
+    changed = []
 
-    # Reuse all existing records, and add new A records for the remaining IPs.
-    for rec, ip in zip(unused_existing, pending_ips):
-        cf_api(
-            session, "PATCH", f"/zones/{zone_id}/dns_records/{rec['id']}", token,
-            json={"content": ip},
-        )
-        updates.append((rec.get("content"), ip))
+    # PATCH and POST before DELETE so partial failures cannot shrink the DNS pool.
+    for rec, ip in zip(unused, missing_ips):
+        cf_api(session, "PATCH", f"/zones/{zone_id}/dns_records/{rec['id']}", token,
+               json={"content": ip})
+        changed.append((rec.get("content"), ip))
         print(f"Updated {dns_name}: {rec.get('content')} -> {ip}")
-    for ip in pending_ips[len(unused_existing):]:
-        cf_api(
-            session, "POST", f"/zones/{zone_id}/dns_records", token,
-            json={
-                "type": "A", "name": dns_name, "content": ip, "ttl": 1,
-                "proxied": False, "comment": "Managed by cf-speed-dns",
-            },
-        )
-        updates.append((None, ip))
+    for ip in missing_ips[len(unused):]:
+        cf_api(session, "POST", f"/zones/{zone_id}/dns_records", token,
+               json={"type": "A", "name": dns_name, "content": ip, "ttl": 1,
+                     "proxied": False, "comment": "[CF-IP] cf-speed-dns 优选地址自动维护"})
+        changed.append((None, ip))
         print(f"Created {dns_name}: {ip}")
 
-    if not updates:
+    removable = unused[len(missing_ips):]
+    for rec in removable:
+        cf_api(session, "DELETE", f"/zones/{zone_id}/dns_records/{rec['id']}", token)
+        changed.append((rec.get("content"), None))
+        print(f"Removed extra A record: {dns_name} -> {rec.get('content')}")
+    if not changed:
         print(f"{dns_name}: {len(desired)} IPs are already current; no DNS changes")
-    return updates
+    return changed
 
 
 def pushplus(message):
@@ -256,13 +306,8 @@ def main():
         count = int(target) if target else len(records)
     except ValueError as exc:
         raise DnsSyncError("CF_DNS_RECORD_COUNT must be an integer") from exc
-    if not 1 <= count <= 60:
-        raise DnsSyncError("CF_DNS_RECORD_COUNT must be between 1 and 60")
-    if len(records) > count:
-        raise DnsSyncError(
-            f"Found {len(records)} existing records, but target is {count}; "
-            "automatic record deletion is disabled"
-        )
+    if not 1 <= count <= 30:
+        raise DnsSyncError("CF_DNS_RECORD_COUNT must be between 1 and 30")
     print(f"Checking {len(records)} existing A records for {dns_name}, target={count}")
 
     load_status()
