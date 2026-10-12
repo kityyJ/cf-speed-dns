@@ -75,6 +75,20 @@ INDEX_HTML = r"""<!doctype html>
     .source{display:flex;justify-content:space-between;gap:16px;font-size:13px;padding:9px 0;border-bottom:1px solid var(--line)}.source:last-child{border:0}.ok{color:var(--good)}.bad{color:var(--warn)}
     footer{text-align:center;color:var(--muted);font-size:12px;margin-top:18px;line-height:1.6}
     @media(max-width:760px){.wrap{padding-top:28px}.top{align-items:flex-start;flex-direction:column}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.panel-head{align-items:flex-start;flex-direction:column}}
+
+  .dns-panel,.top-panel{margin:16px 0}
+  .dns-body{padding:16px 18px 18px}
+  .dns-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+  .top-panel .dns-grid{padding:16px 18px}
+  .ip-tile{min-width:0;padding:16px 15px;border:1px solid var(--line);border-radius:14px;background:var(--card)}
+  .ip-label{font-size:12px;color:var(--muted);margin-bottom:9px}
+  .ip-value{font-family:"SFMono-Regular",Consolas,monospace;font-size:clamp(16px,2vw,21px);font-weight:650;letter-spacing:-.04em;line-height:1.3;overflow-wrap:anywhere}
+  .ip-detail,.dns-note{font-size:12px;color:var(--muted);line-height:1.65;overflow-wrap:anywhere}
+  .ip-detail{margin-top:9px}
+  .dns-note{margin-top:5px}
+  .dns-meta{margin:0 0 13px}
+  .dns-panel .btn:disabled{opacity:.45;cursor:not-allowed}
+  @media(max-width:760px){.dns-grid{grid-template-columns:1fr}.ip-value{font-size:20px}.dns-body,.top-panel .dns-grid{padding:14px}.dns-panel .panel-head{flex-direction:column;align-items:flex-start}}
   </style>
 </head>
 <body>
@@ -92,6 +106,34 @@ INDEX_HTML = r"""<!doctype html>
     <div class="card"><div class="label">联通</div><div class="value" id="count-cu">—</div></div>
     <div class="card"><div class="label">移动</div><div class="value" id="count-cmcc">—</div></div>
     <div class="card"><div class="label">全部</div><div class="value" id="count-all">—</div></div>
+  </section>
+
+
+  <section class="panel dns-panel" aria-labelledby="dns-title">
+    <div class="panel-head">
+      <div>
+        <strong id="dns-title">cdn.jia.nz · 当前 DNS 解析 IP</strong>
+        <div class="dns-note">查询公网 A 记录，可能存在 DNS 缓存；这是已解析地址，不代表实时测速结果。</div>
+      </div>
+      <div class="actions">
+        <button class="btn" id="dns-refresh" type="button">刷新解析</button>
+        <button class="btn" id="dns-copy" type="button" disabled>复制全部 IP</button>
+      </div>
+    </div>
+    <div class="dns-body">
+      <div class="dns-meta dns-note" id="dns-meta" role="status">正在读取当前 DNS …</div>
+      <div class="dns-grid" id="dns-grid"></div>
+    </div>
+  </section>
+
+  <section class="panel top-panel" aria-labelledby="top-title">
+    <div class="panel-head">
+      <div>
+        <strong id="top-title">三网优选候选 · 最新榜首</strong>
+        <div class="dns-note">来自项目聚合池的各运营商首位候选；DNS 更新时还会检查 IP 连通性，最终结果以当前 DNS 解析为准。</div>
+      </div>
+    </div>
+    <div class="dns-grid" id="top-grid"><div class="dns-note">正在读取电信、联通、移动优选列表 …</div></div>
   </section>
 
   <div class="tabs">
@@ -160,6 +202,97 @@ async function loadGroup(group){
 document.querySelectorAll(".tab").forEach(x=>x.onclick=()=>loadGroup(x.dataset.group));
 document.querySelector("#rows").onclick=e=>{const v=e.target.dataset.copy;if(v)navigator.clipboard.writeText(v)};
 document.querySelector("#copy-list").onclick=()=>navigator.clipboard.writeText(currentItems.map(x=>`${x.ip}:${x.port}#${x.tag}`).join("\n"));
+
+const dnsHostname="cdn.jia.nz";
+let activeDnsIps=[];
+
+function looksLikeIpv4(ip) {
+  if(typeof ip!=="string") return false;
+  const parts=ip.split(".");
+  return parts.length===4 && parts.every(p=>/^\d{1,3}$/.test(p) && Number(p)>=0 && Number(p)<=255);
+}
+
+function renderIpTiles(target,items){
+  target.innerHTML=items.map(item=>'<div class="ip-tile">'
+    +'<div class="ip-label">'+esc(item.label)+'</div>'
+    +'<div class="ip-value">'+esc(item.ip)+'</div>'
+    +'<div class="ip-detail">'+esc(item.detail||"")+'</div>'
+    +'</div>').join("");
+}
+
+async function refreshDns(){
+  const meta=document.querySelector("#dns-meta");
+  const grid=document.querySelector("#dns-grid");
+  const refresh=document.querySelector("#dns-refresh");
+  const copy=document.querySelector("#dns-copy");
+  refresh.disabled=true;
+  copy.disabled=true;
+  meta.textContent="正在查询公网 DNS …";
+  const providers=[
+    {name:"Cloudflare 1.1.1.1",url:"https://cloudflare-dns.com/dns-query?name="+encodeURIComponent(dnsHostname)+"&type=A",headers:{"Accept":"application/dns-json"}},
+    {name:"Google Public DNS",url:"https://dns.google/resolve?name="+encodeURIComponent(dnsHostname)+"&type=A",headers:{}}
+  ];
+  try{
+    for(const provider of providers){
+      const controller=new AbortController();
+      const timer=setTimeout(()=>controller.abort(),8000);
+      try{
+        const response=await fetch(provider.url,{headers:provider.headers,cache:"no-store",signal:controller.signal});
+        if(!response.ok) throw new Error("HTTP "+response.status);
+        const result=await response.json();
+        if(result.Status!==0) throw new Error("DNS Status "+result.Status);
+        const addresses=[...new Set((result.Answer||[]).filter(a=>a.type===1 && looksLikeIpv4(a.data)).map(a=>a.data))];
+        if(!addresses.length) throw new Error("No A records");
+        activeDnsIps=addresses;
+        renderIpTiles(grid,addresses.map((ip,i)=>({label:"当前 A 记录 "+(i+1),ip,detail:"DNS Only / 443 候选入口"})));
+        meta.textContent="查询来源："+provider.name+" · "+new Date().toLocaleString("zh-CN",{hour12:false})+" · 共 "+addresses.length+" 条 A 记录";
+        copy.disabled=false;
+        return;
+      }catch(error){
+        // Some networks block individual DNS-over-HTTPS providers. Try the next one.
+      }finally{
+        clearTimeout(timer);
+      }
+    }
+    activeDnsIps=[];
+    grid.innerHTML='<div class="dns-note">无法取得公网 DNS 结果。可能是当前网络阻止了 DNS-over-HTTPS 请求，可稍后点「刷新解析」重试。</div>';
+    meta.textContent="DNS 查询暂不可用，下面仍可查看最新聚合优选 IP。";
+  }finally{
+    refresh.disabled=false;
+  }
+}
+
+async function loadCarrierLeaders(){
+  const groups=[["ct","中国电信"],["cu","中国联通"],["cmcc","中国移动"]];
+  const cards=await Promise.all(groups.map(async pair=>{
+    try{
+      const response=await fetch("./api/"+pair[0]+".json",{cache:"no-store"});
+      if(!response.ok) throw new Error("HTTP "+response.status);
+      const data=await response.json();
+      const item=(data.items||[]).find(x=>looksLikeIpv4(x.ip));
+      return {label:pair[1],ip:item?item.ip:"暂无可用候选",detail:item?("来源："+(item.source||"未知")):"数据尚未生成或无有效 IP"};
+    }catch(error){
+      return {label:pair[1],ip:"读取失败",detail:"暂时无法加载该运营商的 IP 池"};
+    }
+  }));
+  renderIpTiles(document.querySelector("#top-grid"),cards);
+}
+
+document.querySelector("#dns-refresh").addEventListener("click",refreshDns);
+document.querySelector("#dns-copy").addEventListener("click",async ()=>{
+  if(!activeDnsIps.length) return;
+  try{
+    await navigator.clipboard.writeText(activeDnsIps.join(String.fromCharCode(10)));
+    document.querySelector("#dns-copy").textContent="已复制";
+    setTimeout(()=>document.querySelector("#dns-copy").textContent="复制全部 IP",1800);
+  }catch(error){
+    document.querySelector("#dns-meta").textContent="复制失败，请手动选中 IP 复制。";
+  }
+});
+refreshDns();
+loadCarrierLeaders();
+setInterval(refreshDns,300000);
+
 loadStatus();loadGroup("all");
 </script>
 </body>
