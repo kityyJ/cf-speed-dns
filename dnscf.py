@@ -224,8 +224,10 @@ def tcp_reachable(ip, timeout=2.0):
 
 def sync_dns(session, zone_id, dns_name, token, records, desired):
     """Update, create or remove only exact-name DNS-only A records."""
-    if not records:
-        raise DnsSyncError(f"No existing A records for {dns_name}; refusing to create DNS blindly")
+    if not records and (dns_name != "cdn.jia.nz" or len(desired) != 30):
+        raise DnsSyncError("Bootstrapping an empty DNS name is permitted only for 30 cdn.jia.nz A records")
+    if not desired:
+        raise DnsSyncError("No validated IPs; refusing to change DNS")
     if len(set(desired)) != len(desired):
         raise DnsSyncError("Duplicate candidate IPs; refusing to change DNS")
     if any(
@@ -299,8 +301,6 @@ def main():
 
     session = requests.Session()
     records = dns_records(session, zone_id, dns_name, token)
-    if not records:
-        raise DnsSyncError(f"No A records found for {dns_name}")
     target = os.environ.get("CF_DNS_RECORD_COUNT", "").strip()
     try:
         count = int(target) if target else len(records)
