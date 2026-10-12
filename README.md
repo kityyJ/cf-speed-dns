@@ -101,17 +101,19 @@ PUSHPLUS_TOKEN   # 可选
 # CF_DNS_MAX_ROTATIONS=6：正常每轮替换最多 6 条，避免一次清空替换
 ```
 
-## DNSPod
+## 当前维护的组件
 
-原有 DNSPod 功能保留：
+- `aggregate_ips.py`、`sources.json`：拉取并聚合电信、联通、移动候选 IP。
+- `dnscf.py`、`.github/workflows/dns_cf.yml`：筛选并维护 `cdn.jia.nz` 的 30 条 DNS-only A 记录。
+- `audit_websites.py`、`.github/workflows/audit_websites.yml`：只读检查 `www.jia.nz` 和 `cook.jia.nz` 的 HTTPS 兼容性。
+- `index.html`、`api/`、`data/`：GitHub Pages 展示和对外 IP 数据接口，由刷新任务生成。
+- `ipTop.html`、`ipTop10.html`：为旧版接口兼容保留的自动生成数据，不是网页。
+- `functions/`：部署到 Cloudflare Pages 时可选用的动态接口。
+- `.github/workflows/refresh.yml`：每 30 分钟更新数据并部署 GitHub Pages。
+- `.github/workflows/pages.yml`：GitHub `main` 分支有变更时进行 Pages 部署。
+- `.github/workflows/test_dns.yml`：对 DNS 同步逻辑执行测试。
 
-```text
-DOMAIN
-SUB_DOMAIN
-SECRETID
-SECRETKEY
-PUSHPLUS_TOKEN   # 可选
-```
+旧版 DNSPod 脚本（未配置密钥且未生效）、检查 `best.jia.nz` 的过时脚本、无效的 Fork 上游同步任务和旧版页面生成兼容入口已清理，避免误导及额外空跑。
 
 ## 本地执行
 
