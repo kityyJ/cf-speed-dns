@@ -258,7 +258,7 @@ def sync_dns(session, zone_id, dns_name, token, records, desired):
     for ip in missing_ips[len(unused):]:
         cf_api(session, "POST", f"/zones/{zone_id}/dns_records", token,
                json={"type": "A", "name": dns_name, "content": ip, "ttl": 1,
-                     "proxied": False, "comment": "[CF-IP] cook-speed 优选地址自动维护"})
+                     "proxied": False, "comment": "[CF-IP] cook-speed-dns 优选地址自动维护"})
         changed.append((None, ip))
         print(f"Created {dns_name}: {ip}")
 
