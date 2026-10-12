@@ -1,4 +1,4 @@
-# cook-speed
+# cook-speed-dns
 
 Cloudflare 三网优选 IP 聚合池。
 
@@ -134,7 +134,7 @@ data/status.json
 
 ## 页面与 60 条解析记录
 
-- GitHub Pages: https://kityyj.github.io/cf-speed-dns/
+- GitHub Pages（仓库重命名后）: https://kityyj.github.io/cook-speed-dns/
 - 页面“当前 DNS 解析 IP”通过公网 DoH 查询 `cdn.jia.nz`，展示实际返回的 A 记录（可能有解析缓存）。
 - 页面“最新榜首”显示聚合池的三网候选 IP；它们不必与当前 DNS 完全一致。
 - `dns_cf.yml` 在每次运行时以 `CF_DNS_RECORD_COUNT=60` 为目标，自动增加缺失 A 记录，不自动删除超额记录或开启 Cloudflare 代理。
