@@ -1,7 +1,7 @@
 import ipaddress
 import unittest
 
-from dnscf import DnsSyncError, dns_records, pick_ips, sync_dns
+from dnscf import DnsSyncError, candidate_rank, dns_records, pick_ips, sync_dns
 
 NETWORKS = [ipaddress.ip_network("104.16.0.0/13"), ipaddress.ip_network("162.158.0.0/15")]
 
@@ -101,6 +101,29 @@ class DNSTests(unittest.TestCase):
         result = pick_ips(pools, 60, NETWORKS, probe=lambda ip: True)
         self.assertEqual(len(set(result)), 60)
         self.assertEqual(result[:3], [ips[0], ips[60], ips[120]])
+
+    def test_reported_low_speed_is_rejected(self):
+        item = {"ip": "104.17.1.1", "port": 443,
+                "tag": "50ms | 0.1mb/s"}
+        self.assertIsNone(candidate_rank(item, 0))
+
+    def test_low_latency_ranks_ahead_of_unknown(self):
+        measured = {"ip": "104.17.1.2", "port": 443,
+                    "tag": "48.2ms | 30mb/s"}
+        unknown = {"ip": "104.17.1.3", "port": 443, "tag": "HKG"}
+        self.assertLess(candidate_rank(measured, 5), candidate_rank(unknown, 0))
+
+    def test_shrink_to_thirty_dns_records(self):
+        records = [
+            {"id": str(i), "name": "cdn.jia.nz", "type": "A",
+             "content": f"104.17.1.{i + 1}", "proxied": False}
+            for i in range(32)
+        ]
+        desired = [r["content"] for r in records[:30]]
+        sess = FakeSession([FakeResponse({}), FakeResponse({})])
+        changes = sync_dns(sess, "zone", "cdn.jia.nz", "token", records, desired)
+        self.assertEqual(len(changes), 2)
+        self.assertEqual([call[0] for call in sess.calls], ["DELETE", "DELETE"])
 
     def test_proxy_mode_is_protected(self):
         records = [{"id": "a", "content": "104.17.1.1", "proxied": True}]
