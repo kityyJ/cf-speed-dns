@@ -87,7 +87,7 @@ Cloudflare 三网优选 IP 聚合池。
 1. 临时刷新最新 IP 池
 2. 从最新三网 JSON 候选池中读取优选 IP
 3. 电信、联通、移动优先各选取 10 个 IP；优先参考上游提供的延迟和下载吞吐量，剔除已知低速地址，再结合地区标签排序、去重和验证 Cloudflare IPv4 网段
-4. GitHub Runner 仅负责 TCP 443 可用性检查；**绝不把美国 Runner 的延迟当作中国大陆测速**
+4. GitHub Runner 负责 HTTPS + TLS SNI + HTTP Host 可用性筛选（必要时可改回 TCP 443）；**绝不把美国 Runner 的延迟当作中国大陆测速**
 5. 正常每轮最多更换 6 条 A 记录（避免频繁抖动）；缺记录时直接补齐到 30 条，已有 30 条时保留其余现有记录
 6. 同步 `cdn.jia.nz` 的 30 条 A 记录（DNS Only）；记录清空时可以从新的有效候选池重新建立，超过 30 条时清理多余记录
 
@@ -136,9 +136,10 @@ data/status.json
 
 ### HTTPS 实际站点兼容性诊断
 
-每次 DNS 更新从候选中取前 3 个 IP，尝试连接 `cook.jia.nz`，保留 TLS SNI、HTTP `Host`，检查证书、响应码与响应头耗时。结果只写入 Actions 日志，**不会因诊断失败自动删除现有 DNS**；原因是 `cook.jia.nz` 可能只是优选 CNAME 入口，未必本身提供网页服务。
+当前工作流先通过 `cook.jia.nz` 对候选 IP 进行强制 IP 的 HTTPS 访问检查：要求 TLS 证书有效、SNI 和 `Host` 正确，且目标网站返回 2xx/3xx。未通过的候选 IP 会被跳过；如果可用候选不足 30 个则**整次停止 DNS 更新，保留现有 DNS 记录**。额外从选中的 IP 抽样 3 个，输出 HTTP 状态、TCP/TLS 和响应头耗时到 Actions 日志，这些数据只代表 GitHub Runner 路线，**不会作为中国大陆速度评分**。
 
-- `CF_DNS_SITE_AUDIT_HOST=cook.jia.nz` / `CF_DNS_SITE_AUDIT_PATH=/` / `CF_DNS_SITE_AUDIT_COUNT=3`：工作流当前配置。
+- `CF_DNS_SITE_VERIFY=1`：启用实站 HTTPS 兼容性过滤；关闭则回退 TCP 443 连通性检查。
+- `CF_DNS_SITE_AUDIT_HOST=cook.jia.nz` / `CF_DNS_SITE_AUDIT_PATH=/` / `CF_DNS_SITE_AUDIT_COUNT=3`：待检测域名与日志抽样数量。
 - `CF_DNS_MAX_ROTATIONS=6`：已有 30 个 IP 时单轮最多替换 6 个；还未建立或数量不完整时允许直接补齐。
 - `cdn.jia.nz` 的 30 条 A 记录仍是通用 Cloudflare 优选入口，不是按访问者运营商动态分流的智能 DNS。
 - 真正测量中国大陆用户的网站打开速度，还需要中国电信/联通/移动本地探针，并在确认 HTTP `Host`、TLS SNI 合法后按对应网站域名测试；IP 归属日本/韩国不等于中国大陆用户的访问速度。
