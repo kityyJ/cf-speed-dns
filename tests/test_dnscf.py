@@ -2,7 +2,7 @@ import ipaddress
 import unittest
 from unittest.mock import patch
 
-from dnscf import DnsSyncError, audit_site_https, candidate_rank, dns_records, limit_rotation, pick_ips, sync_dns
+from dnscf import DnsSyncError, audit_site_https, candidate_rank, compatible_with_sites, dns_records, limit_rotation, pick_ips, sync_dns
 
 NETWORKS = [ipaddress.ip_network("104.16.0.0/13"), ipaddress.ip_network("162.158.0.0/15")]
 
@@ -170,6 +170,32 @@ class DNSTests(unittest.TestCase):
             self.assertIn(b"GET / HTTP/1.1\r\n", sent)
             self.assertTrue(result["ok"])
             self.assertEqual(result["status"], 200)
+
+    def test_multi_site_verifier_accepts_both_sites(self):
+        checked = []
+        def checker(ip, host, path):
+            checked.append((ip, host, path))
+            return {"ok": True, "status": 200}
+        self.assertTrue(compatible_with_sites("104.17.1.1",
+                                             ["cook.jia.nz", "www.jia.nz"],
+                                             "/", checker))
+        self.assertEqual(checked,
+                         [("104.17.1.1", "cook.jia.nz", "/"),
+                          ("104.17.1.1", "www.jia.nz", "/")])
+
+    def test_multi_site_verifier_rejects_broken_www(self):
+        checked = []
+        def checker(ip, host, path):
+            checked.append(host)
+            return {"ok": host != "www.jia.nz", "status": 403 if host == "www.jia.nz" else 200}
+        self.assertFalse(compatible_with_sites("104.17.1.1",
+                                               ["cook.jia.nz", "www.jia.nz"],
+                                               "/", checker))
+        self.assertEqual(checked, ["cook.jia.nz", "www.jia.nz"])
+
+    def test_multi_site_verifier_rejects_missing_hosts(self):
+        with self.assertRaises(DnsSyncError):
+            compatible_with_sites("104.17.1.1", [], "/")
 
     def test_shrink_to_thirty_dns_records(self):
         records = [
