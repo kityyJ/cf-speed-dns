@@ -392,14 +392,27 @@ def main():
     print(f"Cloudflare CIDR source: {source}")
     pools = {group: load_pool(group) for group in ("ct", "cu", "cmcc", "all")}
     check_enabled = os.environ.get("CF_DNS_TCP_CHECK", "1") not in ("0", "false", "no")
-    probe = tcp_reachable if check_enabled else None
+    audit_host = os.environ.get("CF_DNS_SITE_AUDIT_HOST", "").strip()
+    audit_path = os.environ.get("CF_DNS_SITE_AUDIT_PATH", "/")
+    site_verify = os.environ.get("CF_DNS_SITE_VERIFY", "0").lower() in ("1", "true", "yes")
+    if site_verify and not audit_host:
+        raise DnsSyncError("CF_DNS_SITE_VERIFY requires CF_DNS_SITE_AUDIT_HOST")
+    if site_verify:
+        # Site TLS/Host validation is a compatibility guard, not a speed score.
+        # If too few valid HTTPS endpoints remain, pick_ips aborts without DNS edits.
+        def site_compatible(ip):
+            result = audit_site_https(ip, audit_host, audit_path)
+            if not result["ok"]:
+                print(f"Rejected candidate {ip}: HTTPS site compatibility {result}")
+            return result["ok"]
+        probe = site_compatible
+    else:
+        probe = tcp_reachable if check_enabled else None
     desired = pick_ips(pools, count, networks, probe=probe)
     print(f"Selected IPs (CT/CU/CMCC first): {', '.join(desired)}")
-    # Optional website-specific checks are diagnostics until a real mainland
-    # probe is available; NEVER use a US runner's TTFB as a CN speed ranking.
-    audit_host = os.environ.get("CF_DNS_SITE_AUDIT_HOST", "").strip()
+    # Diagnostic TTFB is collected from GitHub; NEVER rank Chinese carrier
+    # candidates by a US runner's response time.
     if audit_host:
-        audit_path = os.environ.get("CF_DNS_SITE_AUDIT_PATH", "/")
         try:
             audit_count = int(os.environ.get("CF_DNS_SITE_AUDIT_COUNT", "3"))
         except ValueError as exc:
