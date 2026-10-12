@@ -27,6 +27,11 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Validate DNS updater
+        run: |
+          python -m compileall -q dnscf.py aggregate_ips.py tests
+          python -m unittest discover -s tests -v
+
       - name: Refresh IP pool for this run
         run: python aggregate_ips.py
 
