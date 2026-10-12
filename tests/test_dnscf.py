@@ -125,6 +125,22 @@ class DNSTests(unittest.TestCase):
         self.assertEqual(len(changes), 2)
         self.assertEqual([call[0] for call in sess.calls], ["DELETE", "DELETE"])
 
+    def test_bootstrap_empty_cdn_with_thirty_records(self):
+        desired = [f"104.17.1.{i + 1}" for i in range(30)]
+        session = FakeSession([FakeResponse({}) for _ in desired])
+        changes = sync_dns(session, "zone", "cdn.jia.nz", "token", [], desired)
+        self.assertEqual(len(changes), 30)
+        self.assertEqual([method for method, _, _ in session.calls], ["POST"] * 30)
+        self.assertTrue(all(call[2]["json"]["proxied"] is False for call in session.calls))
+        self.assertTrue(all(call[2]["json"]["ttl"] == 1 for call in session.calls))
+
+    def test_bootstrap_empty_unexpected_domain_is_blocked(self):
+        session = FakeSession([])
+        desired = [f"104.17.1.{i + 1}" for i in range(30)]
+        with self.assertRaises(DnsSyncError):
+            sync_dns(session, "zone", "cook.jia.nz", "token", [], desired)
+        self.assertEqual(session.calls, [])
+
     def test_proxy_mode_is_protected(self):
         records = [{"id": "a", "content": "104.17.1.1", "proxied": True}]
         with self.assertRaises(DnsSyncError):
