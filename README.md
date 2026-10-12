@@ -82,21 +82,20 @@ Cloudflare 三网优选 IP 聚合池。
 
 ## Cloudflare DNS
 
-`.github/workflows/dns_cf.yml` 每 6 小时执行一次：
+`.github/workflows/dns_cf.yml` 每 30 分钟检查并同步一次（GitHub Actions 计划运行可能延迟）：
 
 1. 临时刷新最新 IP 池
-2. 从本地 `ipTop10.html` 读取优选 IP
-3. 电信、联通、移动轮询取候选 IP，进行去重、Cloudflare 网段与 TCP 443 连通性检查
-4. 更新 `CF_DNS_NAME` 对应的 A 记录，记录不足时自动补齐至 60 条（DNS Only）
+2. 从最新三网 JSON 候选池中读取优选 IP
+3. 电信、联通、移动优先各选取 10 个 IP，剔除已知低速候选，依据来源提供的延迟或地域标签排序，进行去重、Cloudflare 网段与 TCP 443 连通性检查
+4. 同步 `cdn.jia.nz` 的 30 条 A 记录（DNS Only）；记录清空时可自动重新建立，超过 30 条时清理多余记录
 
 需要 Secrets：
 
 ```text
 CF_API_TOKEN
 CF_ZONE_ID
-CF_DNS_NAME
 PUSHPLUS_TOKEN   # 可选
-CF_DNS_RECORD_COUNT # 工作流已配置 60，可设置为 1–60（默认使用现有记录数）
+# 工作流固定 CF_DNS_NAME=cdn.jia.nz、CF_DNS_RECORD_COUNT=30
 ```
 
 ## DNSPod
@@ -132,11 +131,12 @@ data/status.json
 
 这套机制是“聚合已经由不同网络环境持续测速维护的结果”，不是用 GitHub Actions Runner 自己模拟中国电信、联通、移动测速。GitHub Runner 的网络位置无法代表三大运营商实际用户，因此三网分类以对应数据源为准。
 
-## 页面与 60 条解析记录
+## 域名架构与 30 条解析记录
 
-- GitHub Pages（仓库重命名后）: https://kityyj.github.io/cook-speed-dns/
+- GitHub Pages: https://kityyj.github.io/cook-speed-dns/
+- `cook.jia.nz`（DNS Only CNAME）→ `cdn.jia.nz` → 30 个官方 Cloudflare IPv4 A 记录；不再使用 `cook.cf.090227.xyz`。
 - 页面“当前 DNS 解析 IP”通过公网 DoH 查询 `cdn.jia.nz`，展示实际返回的 A 记录（可能有解析缓存）。
 - 页面“最新榜首”显示聚合池的三网候选 IP；它们不必与当前 DNS 完全一致。
-- `dns_cf.yml` 在每次运行时以 `CF_DNS_RECORD_COUNT=60` 为目标，自动增加缺失 A 记录，不自动删除超额记录或开启 Cloudflare 代理。
+- `dns_cf.yml` 在每次运行时以 `CF_DNS_RECORD_COUNT=30` 为目标，自动补齐缺失 A 记录或清理超额记录，不开启 Cloudflare 代理。
 - DNS 记录创建和更新都依赖 GitHub Secrets 中具有 DNS 编辑权限的 Cloudflare API Token。
-- **注意：** 60 条 A 记录不是速度评分或智能负载均衡；DNS 响应会变大，部分客户端或递归解析器可能截断返回，客户端也不一定选最快地址。GitHub Runner 的 TCP 测试不能代表中国三网实际速度。
+- **注意：** 30 条 A 记录不是速度评分或智能负载均衡；DNS 响应会变大，部分客户端或递归解析器可能截断返回，客户端也不一定选最快地址。GitHub Runner 的 TCP 测试不能代表中国三网实际速度。
