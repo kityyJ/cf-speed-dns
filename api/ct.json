@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-12 06:02:56 UTC",
+  "generated_at": "2026-10-12 06:04:42 UTC",
   "group": "ct",
   "count": 56,
   "items": [
@@ -16,7 +16,7 @@
       "source": "CM CloudFlareYes"
     },
     {
-      "ip": "162.159.152.53",
+      "ip": "162.159.153.239",
       "port": 443,
       "tag": "CT",
       "source": "CM 电信优选"
@@ -28,7 +28,7 @@
       "source": "CM CloudFlareYes"
     },
     {
-      "ip": "162.159.153.144",
+      "ip": "162.159.153.170",
       "port": 443,
       "tag": "CT",
       "source": "CM 电信优选"
@@ -40,7 +40,7 @@
       "source": "CM CloudFlareYes"
     },
     {
-      "ip": "162.159.153.170",
+      "ip": "162.159.152.11",
       "port": 443,
       "tag": "CT",
       "source": "CM 电信优选"
@@ -52,7 +52,7 @@
       "source": "CM CloudFlareYes"
     },
     {
-      "ip": "162.159.153.217",
+      "ip": "162.159.153.216",
       "port": 443,
       "tag": "CT",
       "source": "CM 电信优选"
@@ -64,7 +64,7 @@
       "source": "CM CloudFlareYes"
     },
     {
-      "ip": "162.159.152.155",
+      "ip": "162.159.153.184",
       "port": 443,
       "tag": "CT",
       "source": "CM 电信优选"
