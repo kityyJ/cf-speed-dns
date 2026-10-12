@@ -136,9 +136,15 @@ data/status.json
 
 ### HTTPS 实际站点兼容性诊断
 
-当前工作流先通过 `cook.jia.nz` 对候选 IP 进行强制 IP 的 HTTPS 访问检查：要求 TLS 证书有效、SNI 和 `Host` 正确，且目标网站返回 2xx/3xx。未通过的候选 IP 会被跳过；如果可用候选不足 30 个则**整次停止 DNS 更新，保留现有 DNS 记录**。额外从选中的 IP 抽样 3 个，输出 HTTP 状态、TCP/TLS 和响应头耗时到 Actions 日志，这些数据只代表 GitHub Runner 路线，**不会作为中国大陆速度评分**。
+`www.jia.nz` 和 `cook.jia.nz` 都 CNAME 到 `cdn.jia.nz`，共用 30 条 A 记录。**候选 IP 必须同时兼容两个网站**，不能仅通过一个站点的测试。
 
-- `CF_DNS_SITE_VERIFY=1`：启用实站 HTTPS 兼容性过滤；关闭则回退 TCP 443 连通性检查。
+- `.github/workflows/audit_websites.yml`：每小时以 GitHub Runner 独立检查目前已发布的 30 个 IP，在两个站点分别验证 TLS 证书、SNI、Host、HTTP 状态与响应头耗时。出现失败只报告，不擅自更改 DNS。
+- 运行日志：https://github.com/kityyJ/cook-speed-dns/actions/workflows/audit_websites.yml
+- 2026-10-12 首次检查为两个网站均 30/30 通过，但这是海外 Runner 的可用性验证，**不等于中国大陆加载速度测试**。
+
+当前工作流先通过 `cook.jia.nz` 和 `www.jia.nz` **两个网站**对候选 IP 进行强制 IP 的 HTTPS 访问检查：要求 TLS 证书有效、SNI 和 `Host` 正确，且两个目标网站均返回 2xx/3xx。未通过的候选 IP 会被跳过；如果可用候选不足 30 个则**整次停止 DNS 更新，保留现有 DNS 记录**。额外从选中的 IP 抽样 3 个，输出 HTTP 状态、TCP/TLS 和响应头耗时到 Actions 日志，这些数据只代表 GitHub Runner 路线，**不会作为中国大陆速度评分**。
+
+- `CF_DNS_SITE_VERIFY=1`、`CF_DNS_SITE_VERIFY_EXTRA_HOSTS=www.jia.nz`：要求同时通过 `cook.jia.nz` 和 `www.jia.nz` 的实站 HTTPS 兼容性检查；关闭验证则回退 TCP 443 连通性检查。
 - `CF_DNS_SITE_AUDIT_HOST=cook.jia.nz` / `CF_DNS_SITE_AUDIT_PATH=/` / `CF_DNS_SITE_AUDIT_COUNT=3`：待检测域名与日志抽样数量。
 - `CF_DNS_MAX_ROTATIONS=6`：已有 30 个 IP 时单轮最多替换 6 个；还未建立或数量不完整时允许直接补齐。
 - `cdn.jia.nz` 的 30 条 A 记录仍是通用 Cloudflare 优选入口，不是按访问者运营商动态分流的智能 DNS。
