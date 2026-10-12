@@ -42,7 +42,7 @@ INDEX_HTML = r"""<!doctype html>
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="color-scheme" content="light dark">
   <meta name="description" content="Cloudflare 三网优选 IP 聚合池">
-  <title>cook-dnscf · CF 优选 IP</title>
+  <title>cook-speed · CF 优选 IP</title>
   <style>
     :root {
       font-family: -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif;
@@ -95,7 +95,7 @@ INDEX_HTML = r"""<!doctype html>
 <main class="wrap">
   <div class="top">
     <div>
-      <h1>cook-dnscf</h1>
+      <h1>cook-speed</h1>
       <p class="lead">多来源聚合 · 三网分类 · Cloudflare 官方 IPv4 网段校验 · 自动更新</p>
     </div>
     <div class="badge"><span class="dot"></span><span id="updated">读取状态…</span></div>
@@ -526,7 +526,7 @@ def main():
 
     session = requests.Session()
     session.headers.update({
-        "User-Agent": "cf-speed-dns/2.0 (+https://github.com/kityyJ/cf-speed-dns)",
+        "User-Agent": "cook-speed/2.0 (+https://github.com/kityyJ/cf-speed-dns)",
         "Accept": "text/plain,application/json;q=0.9,*/*;q=0.8",
     })
 
