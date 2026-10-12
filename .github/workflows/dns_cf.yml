@@ -55,5 +55,7 @@ jobs:
           CF_DNS_SITE_AUDIT_HOST: cook.jia.nz
           CF_DNS_SITE_AUDIT_PATH: "/"
           CF_DNS_SITE_AUDIT_COUNT: "3"
+          # Only publish endpoints that serve cook.jia.nz with valid HTTPS SNI/Host.
+          CF_DNS_SITE_VERIFY: "1"
           PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
         run: python dnscf.py
