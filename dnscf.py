@@ -1,231 +1,241 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Cloudflare DNS 更新器
-获取优选 IP 并更新 Cloudflare DNS 记录
+"""Sync validated, carrier-diverse Cloudflare IPs into existing DNS A records.
+
+The upstream pools supply the carrier rankings. Connectivity checks from a
+GitHub runner are only an availability guard, not a China-network speed test.
 """
 
+import ipaddress
 import json
-import traceback
-import time
 import os
+import socket
+import sys
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 import requests
 
-# API 配置
-CF_API_TOKEN = os.environ.get("CF_API_TOKEN")
-CF_ZONE_ID = os.environ.get("CF_ZONE_ID")
-CF_DNS_NAME = os.environ.get("CF_DNS_NAME")
-PUSHPLUS_TOKEN = os.environ.get("PUSHPLUS_TOKEN")
+from aggregate_ips import fetch_cf_networks
 
-# 请求头
-HEADERS = {
-    'Authorization': f'Bearer {CF_API_TOKEN}',
-    'Content-Type': 'application/json'
-}
-
-# 默认超时时间（秒）
-DEFAULT_TIMEOUT = 30
+ROOT = Path(__file__).resolve().parent
+API_ROOT = "https://api.cloudflare.com/client/v4"
+REQUEST_TIMEOUT = 20
 
 
-def get_cf_speed_test_ip(timeout=10, max_retries=5):
-    """
-    获取当前优选 IP。
+class DnsSyncError(RuntimeError):
+    pass
 
-    优先读取仓库内由 aggregate_ips.py 生成的 ipTop10.html，
-    这样 DNS 更新和页面/API 使用同一套 IP 池。仅当本地文件不存在
-    或为空时，才回退到外部 URL。
-    """
-    local_path = os.path.join(os.path.dirname(__file__), "ipTop10.html")
+
+def cf_api(session, method, endpoint, token, **kwargs):
+    url = API_ROOT + endpoint
     try:
-        if os.path.exists(local_path):
-            with open(local_path, "r", encoding="utf-8") as f:
-                value = f.read().strip()
-            if value:
-                print(f"使用本地优选 IP 池: {local_path}")
-                return value
-    except Exception as e:
-        print(f"读取本地优选 IP 池失败: {e}")
-
-    fallback_url = os.environ.get(
-        "CF_IP_SOURCE_URL",
-        "https://addressesapi.090227.xyz/CloudFlareYes",
-    )
-
-    for attempt in range(max_retries):
-        try:
-            response = requests.get(
-                fallback_url,
-                timeout=timeout,
-                headers={"User-Agent": "cf-speed-dns/2.0"},
-            )
-            if response.status_code == 200:
-                # 外部兼容格式通常是一行一个 IP:port#标签。
-                ips = []
-                for line in response.text.replace(",", "\n").splitlines():
-                    value = line.strip().split("#", 1)[0].strip()
-                    if not value:
-                        continue
-                    if ":" in value:
-                        value = value.split(":", 1)[0].strip()
-                    parts = value.split(".")
-                    if len(parts) == 4 and all(p.isdigit() and 0 <= int(p) <= 255 for p in parts):
-                        if value not in ips:
-                            ips.append(value)
-                if ips:
-                    return ",".join(ips[:10])
-        except Exception as e:
-            print(f"获取优选 IP 失败 (尝试 {attempt + 1}/{max_retries}): {e}")
-            if attempt == max_retries - 1:
-                traceback.print_exc()
-    return None
+        response = session.request(
+            method, url,
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=REQUEST_TIMEOUT, **kwargs,
+        )
+        payload = response.json()
+    except (requests.RequestException, ValueError) as exc:
+        raise DnsSyncError(f"Cloudflare API request failed ({method} {endpoint}): {exc}") from exc
+    if not isinstance(payload, dict):
+        raise DnsSyncError(f"Unexpected Cloudflare API response ({method} {endpoint})")
+    if response.status_code >= 400 or payload.get("success") is not True:
+        errors = payload.get("errors", []) if isinstance(payload, dict) else []
+        raise DnsSyncError(f"Cloudflare API rejected {method} {endpoint}: HTTP {response.status_code}; {errors}")
+    return payload
 
 
-def get_dns_records(name):
-    """
-    获取指定名称的 DNS 记录列表（仅 A 类型）
+def dns_records(session, zone_id, dns_name, token):
+    """Query exact A records, across all pages (not the first zone page)."""
+    found = []
+    page = 1
+    while True:
+        payload = cf_api(
+            session, "GET", f"/zones/{zone_id}/dns_records", token,
+            params={"name.exact": dns_name, "type": "A", "page": page, "per_page": 100},
+        )
+        found.extend(
+            rec for rec in payload.get("result", [])
+            if rec.get("name") == dns_name and rec.get("type") == "A"
+        )
+        total_pages = int(payload.get("result_info", {}).get("total_pages", 1))
+        if page >= total_pages:
+            break
+        page += 1
+    return sorted(found, key=lambda rec: rec["id"])
 
-    Args:
-        name: DNS 记录名称
 
-    Returns:
-        记录字典列表（包含 id 和 content），失败返回空列表
-    """
-    records = []
-    url = f'https://api.cloudflare.com/client/v4/zones/{CF_ZONE_ID}/dns_records'
-
+def load_status(root=ROOT):
+    path = root / "data" / "status.json"
     try:
-        response = requests.get(url, headers=HEADERS, timeout=DEFAULT_TIMEOUT)
-        if response.status_code == 200:
-            result = response.json().get('result', [])
-            for record in result:
-                # 只获取 A 类型记录，避免更新其他类型记录导致 400 错误
-                if record.get('name') == name and record.get('type') == 'A':
-                    records.append({
-                        'id': record['id'],
-                        'content': record.get('content', '')
-                    })
-        else:
-            print(f'获取 DNS 记录失败: {response.text}')
-    except Exception as e:
-        print(f'获取 DNS 记录异常: {e}')
-        traceback.print_exc()
-
-    return records
+        status = json.loads(path.read_text(encoding="utf-8"))
+        updated = datetime.strptime(status["generated_at"], "%Y-%m-%d %H:%M:%S UTC").replace(tzinfo=timezone.utc)
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        raise DnsSyncError(f"IP pool status is missing or invalid: {exc}") from exc
+    age = datetime.now(timezone.utc) - updated
+    if not -timedelta(minutes=5) <= age <= timedelta(hours=2):
+        raise DnsSyncError(f"IP pool is stale: generated at {updated.isoformat()}")
+    if int(status.get("healthy_sources", 0)) <= 0:
+        raise DnsSyncError("No working upstream IP sources; DNS records were not changed")
+    return status
 
 
-def update_dns_record(record_info, name, cf_ip):
-    """
-    更新 DNS 记录
-
-    Args:
-        record_info: DNS 记录字典，包含 id 和 content
-        name: DNS 记录名称
-        cf_ip: 新的 IP 地址
-
-    Returns:
-        操作结果字符串
-    """
-    record_id = record_info['id']
-    current_ip = record_info.get('content', '')
-
-    # 如果 IP 相同则跳过更新
-    if current_ip == cf_ip:
-        current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-        print(f"cf_dns_change skip: ---- Time: {current_time} ---- ip：{cf_ip} (已是最新)")
-        return f"ip:{cf_ip} 解析 {name} 跳过 (已是最新)"
-
-    url = f'https://api.cloudflare.com/client/v4/zones/{CF_ZONE_ID}/dns_records/{record_id}'
-    data = {
-        'type': 'A',
-        'name': name,
-        'content': cf_ip
-    }
-
+def load_pool(group, root=ROOT):
+    path = root / "api" / f"{group}.json"
     try:
-        response = requests.put(url, headers=HEADERS, json=data, timeout=DEFAULT_TIMEOUT)
-        current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-
-        if response.status_code == 200:
-            print(f"cf_dns_change success: ---- Time: {current_time} ---- ip：{cf_ip}")
-            return f"ip:{cf_ip} 解析 {name} 成功"
-        else:
-            print(f"cf_dns_change ERROR: ---- Time: {current_time} ---- MESSAGE: {response.text}")
-            return f"ip:{cf_ip} 解析 {name} 失败"
-    except Exception as e:
-        traceback.print_exc()
-        current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-        print(f"cf_dns_change ERROR: ---- Time: {current_time} ---- MESSAGE: {e}")
-        return f"ip:{cf_ip} 解析 {name} 失败"
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        items = payload["items"]
+        if not isinstance(items, list):
+            raise ValueError("items is not an array")
+        return items
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        raise DnsSyncError(f"IP pool {group} is missing or invalid: {exc}") from exc
 
 
-def push_plus(content):
-    """
-    发送 PushPlus 消息推送
+def valid_cf_ip(item, networks):
+    try:
+        if int(item.get("port", 443)) != 443:
+            return None
+        address = ipaddress.ip_address(item["ip"])
+        if address.version != 4 or not address.is_global:
+            return None
+        if not any(address in network for network in networks):
+            return None
+        return str(address)
+    except (AttributeError, KeyError, TypeError, ValueError):
+        return None
 
-    Args:
-        content: 消息内容
-    """
-    if not PUSHPLUS_TOKEN:
-        print("PUSHPLUS_TOKEN 未设置，跳过消息推送")
+
+def pick_ips(pools, count, networks, probe=None):
+    """Prefer one IP per carrier; fill from all sources, dedupe and verify."""
+    selected = []
+    seen = set()
+    checked = {}
+
+    def add_first(group):
+        for item in pools[group]:
+            ip = valid_cf_ip(item, networks)
+            if not ip or ip in seen:
+                continue
+            if ip not in checked:
+                checked[ip] = True if probe is None else probe(ip)
+            if not checked[ip]:
+                continue
+            seen.add(ip)
+            selected.append(ip)
+            return True
+        return False
+
+    for group in ("ct", "cu", "cmcc"):
+        if len(selected) >= count:
+            break
+        add_first(group)
+    if len(selected) < count:
+        for group in ("all", "ct", "cu", "cmcc"):
+            for item in pools[group]:
+                if len(selected) >= count:
+                    break
+                ip = valid_cf_ip(item, networks)
+                if not ip or ip in seen:
+                    continue
+                if ip not in checked:
+                    checked[ip] = True if probe is None else probe(ip)
+                if checked[ip]:
+                    seen.add(ip)
+                    selected.append(ip)
+            if len(selected) >= count:
+                break
+    if len(selected) < count:
+        raise DnsSyncError(f"Only {len(selected)} valid and reachable IPs for {count} DNS records; no changes made")
+    return selected
+
+
+def tcp_reachable(ip, timeout=2.0):
+    try:
+        with socket.create_connection((ip, 443), timeout=timeout):
+            return True
+    except OSError:
+        return False
+
+
+def sync_dns(session, zone_id, dns_name, token, records, desired):
+    """Keep matching records unchanged; PATCH only addresses needing replacement."""
+    if not records:
+        raise DnsSyncError(f"No existing A records for {dns_name}; refusing to create an unexpected DNS name")
+    if len(records) != len(desired):
+        raise DnsSyncError("Candidate IP count does not match DNS A record count")
+    if any(rec.get("proxied") is True for rec in records):
+        raise DnsSyncError("Some A records are proxied; disable the orange cloud before using CF edge IPs")
+
+    matched_ids = set()
+    matched_ips = set()
+    for ip in desired:
+        for rec in records:
+            if rec["id"] not in matched_ids and rec.get("content") == ip:
+                matched_ids.add(rec["id"])
+                matched_ips.add(ip)
+                break
+    remaining_records = [rec for rec in records if rec["id"] not in matched_ids]
+    remaining_ips = [ip for ip in desired if ip not in matched_ips]
+    updates = []
+    for rec, ip in zip(remaining_records, remaining_ips):
+        cf_api(
+            session, "PATCH", f"/zones/{zone_id}/dns_records/{rec['id']}", token,
+            json={"content": ip},
+        )
+        updates.append((rec.get("content"), ip))
+        print(f"Updated {dns_name}: {rec.get('content')} -> {ip}")
+    if not updates:
+        print(f"{dns_name}: {len(desired)} IPs are already current; no DNS changes")
+    return updates
+
+
+def pushplus(message):
+    token = os.environ.get("PUSHPLUS_TOKEN")
+    if not token:
         return
-
-    url = 'http://www.pushplus.plus/send'
-    data = {
-        "token": PUSHPLUS_TOKEN,
-        "title": "IP优选DNSCF推送",
-        "content": content,
-        "template": "markdown",
-        "channel": "wechat"
-    }
-
     try:
-        body = json.dumps(data).encode(encoding='utf-8')
-        headers = {'Content-Type': 'application/json'}
-        requests.post(url, data=body, headers=headers, timeout=DEFAULT_TIMEOUT)
-    except Exception as e:
-        print(f"消息推送失败: {e}")
+        response = requests.post(
+            "https://www.pushplus.plus/send",
+            json={"token": token, "title": "Cloudflare 优选 DNS", "content": message,
+                  "template": "markdown", "channel": "wechat"},
+            timeout=10,
+        )
+        response.raise_for_status()
+    except requests.RequestException as exc:
+        print(f"Optional PushPlus notification failed: {exc}")
 
 
 def main():
-    """主函数"""
-    # 检查必要的环境变量
-    if not all([CF_API_TOKEN, CF_ZONE_ID, CF_DNS_NAME]):
-        print("错误: 缺少必要的环境变量 (CF_API_TOKEN, CF_ZONE_ID, CF_DNS_NAME)")
-        return
+    token = os.environ.get("CF_API_TOKEN")
+    zone_id = os.environ.get("CF_ZONE_ID")
+    dns_name = os.environ.get("CF_DNS_NAME", "").strip().lower().rstrip(".")
+    if not all((token, zone_id, dns_name)):
+        raise DnsSyncError("Required secrets: CF_API_TOKEN, CF_ZONE_ID, CF_DNS_NAME")
+    if "." not in dns_name or "*" in dns_name:
+        raise DnsSyncError("CF_DNS_NAME must be a fully qualified DNS hostname")
 
-    # 获取最新优选 IP
-    ip_addresses_str = get_cf_speed_test_ip()
-    if not ip_addresses_str:
-        print("错误: 无法获取优选 IP")
-        return
+    session = requests.Session()
+    records = dns_records(session, zone_id, dns_name, token)
+    if not records:
+        raise DnsSyncError(f"No A records found for {dns_name}")
+    print(f"Checking {len(records)} existing A records for {dns_name}")
 
-    ip_addresses = [ip.strip() for ip in ip_addresses_str.split(',') if ip.strip()]
-    if not ip_addresses:
-        print("错误: 未解析到有效 IP 地址")
-        return
-
-    # 获取 DNS 记录
-    dns_records = get_dns_records(CF_DNS_NAME)
-    if not dns_records:
-        print(f"错误: 未找到 {CF_DNS_NAME} 的 DNS 记录")
-        return
-
-    # 检查记录数量是否足够
-    if len(ip_addresses) > len(dns_records):
-        print(f"警告: IP 数量({len(ip_addresses)})超过 DNS 记录数量({len(dns_records)})，只更新前 {len(dns_records)} 个")
-        ip_addresses = ip_addresses[:len(dns_records)]
-
-    # 更新 DNS 记录
-    push_plus_content = []
-    for index, ip_address in enumerate(ip_addresses):
-        dns = update_dns_record(dns_records[index], CF_DNS_NAME, ip_address)
-        push_plus_content.append(dns)
-
-    # 发送推送
-    if push_plus_content:
-        push_plus('\n'.join(push_plus_content))
+    load_status()
+    networks, source = fetch_cf_networks(session, 10)
+    print(f"Cloudflare CIDR source: {source}")
+    pools = {group: load_pool(group) for group in ("ct", "cu", "cmcc", "all")}
+    check_enabled = os.environ.get("CF_DNS_TCP_CHECK", "1") not in ("0", "false", "no")
+    probe = tcp_reachable if check_enabled else None
+    desired = pick_ips(pools, len(records), networks, probe=probe)
+    print(f"Selected IPs (CT/CU/CMCC first): {', '.join(desired)}")
+    updates = sync_dns(session, zone_id, dns_name, token, records, desired)
+    pushplus(f"{dns_name}: {len(updates)} updated, {len(records) - len(updates)} unchanged. IPs: {', '.join(desired)}")
 
 
-if __name__ == '__main__':
-    main()
+if __name__ == "__main__":
+    try:
+        main()
+    except DnsSyncError as exc:
+        print(f"DNS sync failed: {exc}", file=sys.stderr)
+        sys.exit(1)
