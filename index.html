@@ -76,10 +76,10 @@
     <div class="panel-head">
       <div>
         <strong id="dns-title">cdn.jia.nz · 当前 DNS 解析 IP</strong>
-        <div class="dns-note">查询公网 A 记录，可能存在 DNS 缓存；这是已解析地址，不代表实时测速结果。</div>
+        <div class="dns-note">只读查询公网 A 记录，不修改 Cloudflare 后台 DNS。IP 使用固定排序；不同公共 DNS 的缓存可能存在差异。</div>
       </div>
       <div class="actions">
-        <button class="btn" id="dns-refresh" type="button">刷新解析</button>
+        <button class="btn" id="dns-refresh" type="button">重新查询（只读）</button>
         <button class="btn" id="dns-copy" type="button" disabled>复制全部 IP</button>
       </div>
     </div>
@@ -169,6 +169,12 @@ document.querySelector("#copy-list").onclick=()=>navigator.clipboard.writeText(c
 const dnsHostname="cdn.jia.nz";
 let activeDnsIps=[];
 
+function compareIpv4(a,b){
+  const x=a.split(".").map(Number), y=b.split(".").map(Number);
+  for(let i=0;i<4;i++) if(x[i]!==y[i]) return x[i]-y[i];
+  return 0;
+}
+
 function looksLikeIpv4(ip) {
   if(typeof ip!=="string") return false;
   const parts=ip.split(".");
@@ -204,11 +210,19 @@ async function refreshDns(){
         if(!response.ok) throw new Error("HTTP "+response.status);
         const result=await response.json();
         if(result.Status!==0) throw new Error("DNS Status "+result.Status);
-        const addresses=[...new Set((result.Answer||[]).filter(a=>a.type===1 && looksLikeIpv4(a.data)).map(a=>a.data))];
+        const addresses=[...new Set((result.Answer||[]).filter(a=>a.type===1 && looksLikeIpv4(a.data)).map(a=>a.data))].sort(compareIpv4);
         if(!addresses.length) throw new Error("No A records");
+        const lastIps=activeDnsIps;
+        const additions=addresses.filter(ip=>!lastIps.includes(ip));
+        const removals=lastIps.filter(ip=>!addresses.includes(ip));
         activeDnsIps=addresses;
         renderIpTiles(grid,addresses.map((ip,i)=>({label:"当前 A 记录 "+(i+1),ip,detail:"DNS Only / 443 候选入口"})));
-        meta.textContent="查询来源："+provider.name+" · "+new Date().toLocaleString("zh-CN",{hour12:false})+" · 共 "+addresses.length+" 条 A 记录";
+        const changeNote=!lastIps.length
+          ?"首次查询"
+          :additions.length||removals.length
+            ?"与上次查询不同（新增 "+additions.length+"、减少 "+removals.length+"；可能是后台自动更新或 DNS 缓存差异）"
+            :"IP 集合未变化";
+        meta.textContent="查询来源："+provider.name+" · "+new Date().toLocaleString("zh-CN",{hour12:false})+" · 共 "+addresses.length+" 条 A 记录 · 只读查询 · "+changeNote;
         copy.disabled=false;
         return;
       }catch(error){
@@ -218,7 +232,7 @@ async function refreshDns(){
       }
     }
     activeDnsIps=[];
-    grid.innerHTML='<div class="dns-note">无法取得公网 DNS 结果。可能是当前网络阻止了 DNS-over-HTTPS 请求，可稍后点「刷新解析」重试。</div>';
+    grid.innerHTML='<div class="dns-note">无法取得公网 DNS 结果。可能是当前网络阻止了 DNS-over-HTTPS 请求，可稍后点「重新查询」重试。</div>';
     meta.textContent="DNS 查询暂不可用，下面仍可查看最新聚合优选 IP。";
   }finally{
     refresh.disabled=false;
