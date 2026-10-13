@@ -147,18 +147,19 @@ body{background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 
   </style>
+<link rel="stylesheet" href="./assets/network.css?v=2">
 </head>
 <body>
 <header class="site-header">
   <div class="site-nav">
-    <a class="site-brand" href="#network"><span class="site-cloud">☁</span> Cook优选</a>
+    <a class="site-brand" href="#/network"><span class="site-cloud">☁</span> Cook优选</a>
     <span class="brand-hint">Cloudflare CDN 节点优选</span>
     <nav class="site-links" aria-label="主导航">
-      <a href="#network" class="current">◉ <span>网络状态</span></a>
-      <a href="#pool">☆ <span>优选 IP</span></a>
-      <a href="#latency">⌁ <span>分流测试</span></a>
-      <a href="#api">⌘ <span>API</span></a>
-      <a href="#sources-card">▦ <span>更多资源</span></a>
+      <a href="#/network" class="current">◉ <span>网络状态</span></a>
+      <a href="#/ip">☆ <span>优选 IP</span></a>
+      <a href="#/speed">⌁ <span>分流测试</span></a>
+      <a href="#/api">⌘ <span>API</span></a>
+      <a href="#/resources">▦ <span>更多资源</span></a>
     </nav>
     <button id="theme-toggle" class="theme-toggle" type="button" aria-label="切换深色模式"><span id="theme-icon">☾</span></button>
   </div>
@@ -172,24 +173,36 @@ body{background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
   <section class="panel net-panel" id="network">
     <div class="net-title"><h1><span>🌐</span> 当前网络信息</h1><button class="mini-button" type="button" id="network-recheck">↻ 重新检测</button></div>
     <div class="title-line"><span></span></div>
-    <p class="net-description">从浏览器查询当前出口网络信息，并检测常用网站的资源加载耗时。IP 默认脱敏；响应时间不是 ICMP Ping，也不代表中国三网服务器测速。</p>
-    <div class="net-stats">
+    <p class="net-description">分别从国内、国际及 Cloudflare 服务观察浏览器的网络出口，并检测常用网站的 HTTPS 图标资源加载时间。IP 默认脱敏；不同服务不一定走不同线路，测速不等于 TCP Ping，也不代表中国三网探针。</p>
+    <div class="net-stats" id="network-routes">
       <article class="net-stat">
-        <div class="stat-head"><i></i><b>公网 IP</b><small>浏览器查询</small></div>
-        <strong id="net-ip">检测中…</strong><p id="net-ip-region">正在获取网络信息</p><small id="net-ip-source">Cloudflare / ipwho.is</small>
+        <div class="stat-head"><i></i><b>国内网络检测</b><small>IPIP</small></div>
+        <div class="stat-ip-row"><strong id="net-domestic" aria-live="polite">检测中…</strong><button class="ip-toggle" type="button" data-view-ip="domestic" hidden aria-label="显示国内出口完整IP">显示</button></div>
+        <p id="net-domestic-region">正在请求国内 IP 服务</p>
+        <small id="net-domestic-source">来源：myip.ipip.net（可能受 CORS 限制）</small>
       </article>
       <article class="net-stat">
-        <div class="stat-head"><i></i><b>网络运营商</b><small>ISP / ASN</small></div>
-        <strong id="net-isp">检测中…</strong><p id="net-isp-region">正在获取运营商信息</p><small>取决于当前代理 / 网络出口</small>
+        <div class="stat-head"><i></i><b>国外网络检测</b><small>ipwho.is</small></div>
+        <div class="stat-ip-row"><strong id="net-foreign" aria-live="polite">检测中…</strong><button class="ip-toggle" type="button" data-view-ip="foreign" hidden aria-label="显示国外出口完整IP">显示</button></div>
+        <p id="net-foreign-region">正在请求国际 IP 服务</p>
+        <small id="net-foreign-source">来源：ipwho.is，显示该服务看到的出口</small>
       </article>
       <article class="net-stat">
-        <div class="stat-head"><i></i><b>Cloudflare 接入</b><small>Colo</small></div>
-        <strong id="net-colo">检测中…</strong><p id="net-colo-info">正在查询接入节点</p><small>仅代表测速服务的接入点</small>
+        <div class="stat-head"><i></i><b>Cloudflare 接入</b><small>ProxyIPv4 / Colo</small></div>
+        <div class="stat-ip-row"><strong id="net-cloudflare" aria-live="polite">检测中…</strong><button class="ip-toggle" type="button" data-view-ip="cloudflare" hidden aria-label="显示Cloudflare检测的完整IP">显示</button></div>
+        <p id="net-cloudflare-region">正在检测 Cloudflare Edge</p>
+        <small id="net-cloudflare-source">来源：speed.cloudflare.com/meta</small>
       </article>
       <article class="net-stat">
-        <div class="stat-head"><i></i><b>CDN DNS 解析</b><small>DNS Only</small></div>
-        <strong id="net-dns">查询中…</strong><p>cdn.yigeyao.com</p><small>只读查询，不修改后台解析</small>
+        <div class="stat-head"><i></i><b>墙外连通检测</b><small>Google</small></div>
+        <div class="stat-ip-row"><strong id="net-google" aria-live="polite">检测中…</strong></div>
+        <p id="net-google-region">正在加载 Google HTTPS 资源</p>
+        <small id="net-google-source">仅测连通性；浏览器不能直接读取 Google 出口 IP</small>
       </article>
+    </div>
+    <div class="cdn-strip">
+      <div class="cdn-strip-copy"><span class="cdn-pill">DNS Only</span><span><b>cdn.yigeyao.com</b><small>中国大陆三网优选 IP 池 · 只读 DNS 查询</small></span></div>
+      <div class="cdn-strip-actions"><strong id="net-dns">正在查询…</strong><a href="#dns-panel">查看全部 IP ↗</a></div>
     </div>
     <div class="ping-head"><strong>常用站点连通性</strong><small>浏览器资源加载时间 · 不是 ICMP Ping</small></div>
     <div class="ping-grid" id="latency">
@@ -203,7 +216,16 @@ body{background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
       <div class="ping-card"><span class="ping-icon ping-red">▶</span><span class="ping-name">YouTube<small>国际</small></span><b class="ping-time pending" id="ping-youtube">待检测</b></div>
     </div>
     <div class="ping-foot"><span id="ping-status" role="status">正在检测公开图标资源，部分站点可能阻止访问。</span><button class="mini-button" id="ping-retry" type="button">↻ 重新测速</button></div>
+    <p class="privacy-caption">检测由浏览器直接向第三方服务发起请求，服务提供方可能看到你的出口 IP；本站不保存检测数据。HTTPS 图标加载的耗时不能代表完整网站首屏速度。</p>
   </section>
+  <details class="panel port-panel" id="ports">
+    <summary><span class="ports-icon">⇄</span><span><b>Cloudflare 支持端口</b><small>官方标准 HTTP / HTTPS 代理端口（点击展开）</small></span><span class="port-caret" aria-hidden="true">⌄</span></summary>
+    <div class="port-body">
+      <div><b>HTTP</b><div class="port-chips"><code>80</code><code>8080</code><code>8880</code><code>2052</code><code>2082</code><code>2086</code><code>2095</code></div></div>
+      <div><b>HTTPS</b><div class="port-chips"><code>443</code><code>2053</code><code>2083</code><code>2087</code><code>2096</code><code>8443</code></div></div>
+      <p>这些是 Cloudflare 代理可支持的端口，<b>不意味着你的灰云 DNS 或源站已开放全部端口</b>。非标准端口的缓存支持也有限制。<a href="https://developers.cloudflare.com/fundamentals/reference/network-ports/" target="_blank" rel="noopener noreferrer">查看官方文档 ↗</a></p>
+    </div>
+  </details>
   <section class="data-head" id="pool">
     <div><span class="eyebrow">OPTIMIZED IP POOL</span><h2>三网优选 IP</h2><p>多来源数据自动聚合，并筛选网站 HTTPS 兼容的 CDN IP。</p></div>
     <div class="badge"><span class="dot"></span><span id="updated">读取状态…</span></div>
@@ -278,105 +300,6 @@ body{background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
 </main>
 <script>
 const titles={all:"全部优选",ct:"中国电信",cu:"中国联通",cmcc:"中国移动"};
-
-// Browser-side diagnostics. IP is masked; no measurement data is uploaded to this project.
-function maskedVisitorIp(ip){
-  if(typeof ip!=="string"||!ip)return "暂不可用";
-  if(ip.includes(":"))return ip.split(":").slice(0,2).join(":")+"::****";
-  const bits=ip.split(".");
-  return looksLikeIpv4(ip)?bits[0]+"."+bits[1]+".***.***":"暂不可用";
-}
-function valueOrUnknown(val){return typeof val==="string"&&val.trim()?val.trim():"暂不可用"}
-async function browserJson(url){
-  const controller=new AbortController();
-  const timer=setTimeout(()=>controller.abort(),6500);
-  try{
-    const r=await fetch(url,{cache:"no-store",signal:controller.signal});
-    if(!r.ok)throw Error("HTTP "+r.status);
-    return await r.json();
-  }finally{clearTimeout(timer)}
-}
-async function loadNetworkInfo(){
-  const button=document.getElementById("network-recheck");
-  button.disabled=true;
-  for(const id of ["net-ip","net-isp","net-colo"]) document.getElementById(id).textContent="检测中…";
-  try{
-    const result=await Promise.allSettled([browserJson("https://speed.cloudflare.com/meta"),browserJson("https://ipwho.is/")]);
-    const cf=result[0].status==="fulfilled"?result[0].value:null;
-    const geo=result[1].status==="fulfilled"&&result[1].value.success!==false?result[1].value:null;
-    const ip=cf?.clientIp||cf?.ip||geo?.ip||"";
-    const isp=geo?.connection?.isp||geo?.connection?.org||cf?.asOrganization||"";
-    const asn=geo?.connection?.asn||cf?.asn||"";
-    const place=[geo?.country||cf?.country,geo?.region||cf?.city].filter(Boolean).join(" · ");
-    document.getElementById("net-ip").textContent=maskedVisitorIp(ip);
-    document.getElementById("net-ip-region").textContent=place||"地区未知";
-    document.getElementById("net-ip-source").textContent=cf?.clientIp?"数据来源：Cloudflare":geo?.ip?"数据来源：ipwho.is":"接口不可用或被拦截";
-    document.getElementById("net-isp").textContent=valueOrUnknown(isp);
-    document.getElementById("net-isp-region").textContent=asn?"ASN "+String(asn):"ASN 暂不可用";
-    document.getElementById("net-colo").textContent=valueOrUnknown(cf?.colo||cf?.airportIata||"");
-    document.getElementById("net-colo-info").textContent=cf?.colo?"Cloudflare Edge / "+(cf?.city||"位置未知"):"测速服务接口不可用";
-  }finally{button.disabled=false}
-}
-const endpointIcons=[
-  ["douyin","https://www.douyin.com/favicon.ico"],["bilibili","https://www.bilibili.com/favicon.ico"],
-  ["wechat","https://weixin.qq.com/favicon.ico"],["taobao","https://www.taobao.com/favicon.ico"],
-  ["github","https://github.com/favicon.ico"],["jsdelivr","https://www.jsdelivr.com/favicon.ico"],
-  ["cloudflare","https://www.cloudflare.com/favicon.ico"],["youtube","https://www.youtube.com/favicon.ico"]
-];
-function checkIcon(url){
-  return new Promise(resolve=>{
-    const img=new Image();
-    const start=performance.now();
-    let finished=false;
-    function done(state){
-      if(finished)return;
-      finished=true;clearTimeout(timer);img.onload=null;img.onerror=null;
-      resolve({state:state,ms:Math.round(performance.now()-start)});
-    }
-    const timer=setTimeout(()=>done("timeout"),5500);
-    img.onload=()=>done("ok");
-    img.onerror=()=>done("error");
-    img.src=url+(url.includes("?")?"&":"?")+"probe="+Date.now();
-  });
-}
-let pingRound=0;
-async function runPings(){
-  const seq=++pingRound;
-  const button=document.getElementById("ping-retry");
-  button.disabled=true;
-  document.getElementById("ping-status").textContent="正在通过浏览器加载公开图标资源…";
-  endpointIcons.forEach(([id])=>{
-    const e=document.getElementById("ping-"+id);e.className="ping-time pending";e.textContent="检测中…";
-  });
-  const result=await Promise.all(endpointIcons.map(async ([id,url])=>{
-    const r=await checkIcon(url);
-    if(seq!==pingRound)return r;
-    const e=document.getElementById("ping-"+id);
-    e.className="ping-time"+(r.state==="ok"?"":" fail");
-    e.textContent=r.state==="ok"?r.ms+"ms":r.state==="timeout"?"超时":"不可用";
-    e.title=r.state==="ok"?"浏览器加载站点图标资源耗时":"网络、跨域、防盗链或文件不存在均可能导致失败";
-    return r;
-  }));
-  if(seq!==pingRound)return;
-  const success=result.filter(x=>x.state==="ok").length;
-  document.getElementById("ping-status").textContent="完成 "+success+"/"+result.length+" 项。仅供参考：图标缓存、代理和站点访问策略可能影响耗时。";
-  button.disabled=false;
-}
-function applyTheme(theme){
-  document.documentElement.dataset.theme=theme;
-  document.getElementById("theme-icon").textContent=theme==="dark"?"☀":"☾";
-  document.getElementById("theme-toggle").setAttribute("aria-label",theme==="dark"?"切换浅色模式":"切换深色模式");
-}
-try{applyTheme(localStorage.getItem("cook-theme")==="dark"?"dark":"light")}catch(e){applyTheme("light")}
-document.getElementById("theme-toggle").addEventListener("click",()=>{
-  const theme=document.documentElement.dataset.theme==="dark"?"light":"dark";
-  applyTheme(theme);
-  try{localStorage.setItem("cook-theme",theme)}catch(e){}
-});
-document.getElementById("network-recheck").addEventListener("click",loadNetworkInfo);
-document.getElementById("ping-retry").addEventListener("click",runPings);
-loadNetworkInfo();
-runPings();
 
 let current="all", currentItems=[];
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -517,6 +440,7 @@ setInterval(refreshDns,300000);
 
 loadStatus();loadGroup("all");
 </script>
+<script defer src="./assets/network.js?v=2"></script>
 </body>
 </html>
 """

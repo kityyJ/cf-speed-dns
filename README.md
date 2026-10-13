@@ -172,3 +172,18 @@ data/status.json
 3. 重新运行 [DNS 自动维护](https://github.com/kityyJ/cook-speed-dns/actions/workflows/dns_cf.yml) 和 [HTTPS 全池审计](https://github.com/kityyJ/cook-speed-dns/actions/workflows/audit_websites.yml)，均成功后才能确认已完全自动化。
 
 迁移期间：`www.jia.nz`、`cook.jia.nz`、`paycn.jia.nz`、`status.jia.nz` 已直接指向 `cdn.yigeyao.com`，使用现有 30 个优选 IP；旧 `cdn.jia.nz` 暂不删除。
+
+## 首页网络状态（参考 cf.090227.xyz 的信息架构）
+
+首页采用浅色橙色仪表板，支持 `#/network`、`#/ip`、`#/speed`、`#/api`、`#/resources` 路由导航及深浅主题。
+
+- 国内服务观测：浏览器请求 `myip.ipip.net/json` 获取该接口看到的公网出口 IP；若被 CORS 或网络策略拦截则显示不可用。
+- 国外服务观测：浏览器请求 `ipwho.is` 返回出口 IP、地区和网络信息。
+- Cloudflare 接入：浏览器调用 `speed.cloudflare.com/meta` 返回 IP 与接入机房 Colo。
+- Google 测试：只尝试加载 Google HTTPS 静态图标并报告请求耗时或不可用，**不会虚构 Google 出口 IP**。
+- 上述服务看到的 IP 可能相同；地区和运营商标签由各家服务提供，不代表已经确认各运营商独立路由。
+- 常用网站测速：浏览器加载 8 个站点公开图标，显示真实加载耗时或失败，不是 ICMP/TCP Ping，也不能代表完整网页打开速度。
+- 访问者 IP 默认脱敏，用户可以点击显示完整 IP。前端直接访问第三方检测 API，第三方可能看到访客 IP；本站不保存网络检测结果。
+- 支持端口展示引用 [Cloudflare 官方文档](https://developers.cloudflare.com/fundamentals/reference/network-ports/)，仅说明其代理默认支持的端口，不代表自建 DNS/源站已全部开放。
+
+前端检测代码放在 `assets/network.js`，样式在 `assets/network.css`。主页 `index.html` 仍由 `aggregate_ips.py` 的 `INDEX_HTML` 生成，两处必须保持一致；更新 DNS 的 GitHub Actions 未修改。

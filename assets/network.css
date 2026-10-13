@@ -1,0 +1,54 @@
+
+/* Reference-inspired Cloudflare network status, original Cook implementation. */
+.site-links a{transition:color .15s,border-color .15s}
+.net-stat{position:relative;background:linear-gradient(162deg,var(--card),var(--card));transition:box-shadow .18s,transform .18s}
+.net-stat:hover,.ping-card:hover{box-shadow:0 7px 19px rgba(23,35,52,.09);transform:translateY(-1px)}
+html[data-theme=dark] .net-stat:hover,html[data-theme=dark] .ping-card:hover{box-shadow:0 7px 20px rgba(0,0,0,.24)}
+.stat-ip-row{display:flex;align-items:center;gap:6px;min-height:38px;margin:10px 0 5px}
+.stat-ip-row strong{font-size:23px;line-height:1.26;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;letter-spacing:-.025em;min-width:0}
+.net-stat>p{margin:5px 0}
+.net-stat>small{display:block;font-size:10.5px}
+.ip-toggle{flex:none;cursor:pointer;border:1px solid var(--line);border-radius:7px;background:var(--card);color:var(--accent);font-size:10px;padding:3px 6px}
+.ip-toggle:hover{border-color:var(--accent)}
+.ip-toggle[hidden]{display:none!important}
+.net-stat .stat-head i{background:var(--good)}
+.net-stat.net-error .stat-head i{background:#e04f5b}
+.net-stat.net-unsupported .stat-head i{background:var(--warn)}
+.cdn-strip{margin-top:17px;display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid var(--line);border-radius:12px;background:var(--bg);padding:12px 14px}
+.cdn-strip-copy{display:flex;align-items:center;gap:12px;min-width:0}
+.cdn-strip-copy>span:last-child{display:flex;flex-direction:column;min-width:0}
+.cdn-strip-copy b{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:13px;word-break:break-word}
+.cdn-strip-copy small{font-size:11px;color:var(--muted);margin-top:2px}
+.cdn-pill{flex:none;border:1px solid rgba(16,185,129,.3);color:#109b74;font-weight:750;font-size:10px;padding:5px 7px;border-radius:7px;background:rgba(16,185,129,.065)}
+.cdn-strip-actions{display:flex;align-items:center;gap:15px;white-space:nowrap}
+.cdn-strip-actions strong{font-size:13px;font-variant-numeric:tabular-nums}
+.cdn-strip-actions a{font-size:11px;color:var(--accent);text-decoration:none;font-weight:700}
+.cdn-strip-actions a:hover{text-decoration:underline}
+.privacy-caption{font-size:11px;line-height:1.7;color:var(--muted);margin:15px 0 0}
+.port-panel{margin:16px 0 20px;box-shadow:var(--shadow)}
+.port-panel summary{display:flex;align-items:center;gap:11px;padding:18px 21px;cursor:pointer;list-style:none}
+.port-panel summary::-webkit-details-marker{display:none}
+.port-panel summary>span:nth-child(2){display:flex;flex-direction:column;gap:3px}
+.port-panel summary b{font-size:14px}.port-panel summary small{font-size:11px;color:var(--muted)}
+.ports-icon{display:grid;place-items:center;width:34px;height:34px;color:var(--accent);border:1px solid var(--line);border-radius:10px;font-size:20px;font-weight:700}
+.port-caret{margin-left:auto;font-size:23px;color:var(--muted);transition:transform .2s}
+.port-panel[open] .port-caret{transform:rotate(180deg)}
+.port-body{display:grid;gap:14px;border-top:1px solid var(--line);padding:17px 21px 21px}
+.port-body>div>b{font-size:12px}
+.port-chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
+.port-chips code{padding:5px 10px;background:var(--bg);border:1px solid var(--line);border-radius:7px;font-size:12px;font-weight:750}
+.port-body p{color:var(--muted);font-size:11px;line-height:1.7;margin:3px 0 0}
+.port-body p b{color:var(--text)}.port-body p a{color:var(--accent)}
+.ping-time.rapid{color:#11a87a}
+.ping-time.normal{color:#e18d0e}
+.ping-time.slow{color:#e2494f}
+@media(max-width:1100px){.stat-ip-row strong{font-size:20px}}
+@media(max-width:580px){
+  .stat-ip-row strong{font-size:15px}
+  .ip-toggle{padding:3px 5px;font-size:9px}
+  .cdn-strip{align-items:flex-start;flex-direction:column;gap:9px}
+  .cdn-strip-actions{width:100%;justify-content:space-between}
+  .port-panel summary{padding:14px}
+  .port-body{padding:14px}
+  .net-stat>small{font-size:10px}
+}
