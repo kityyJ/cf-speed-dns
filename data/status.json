@@ -1,16 +1,16 @@
 {
-  "generated_at": "2026-10-13 04:11:19 UTC",
+  "generated_at": "2026-10-13 04:36:02 UTC",
   "cloudflare_range_source": "live",
   "cloudflare_only": true,
   "counts": {
-    "ct": 56,
+    "ct": 55,
     "cu": 120,
-    "cmcc": 56,
+    "cmcc": 55,
     "all": 229
   },
   "healthy_sources": 20,
   "failed_sources": 0,
-  "filtered_slow": 61,
+  "filtered_slow": 57,
   "sources": [
     {
       "group": "ct",
@@ -117,7 +117,7 @@
       "name": "WeTest 三网",
       "url": "https://bestcf.pages.dev/wetest/ipv4.txt",
       "ok": true,
-      "count": 17,
+      "count": 16,
       "error": ""
     },
     {
