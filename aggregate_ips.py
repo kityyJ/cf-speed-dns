@@ -42,7 +42,7 @@ INDEX_HTML = r"""<!doctype html>
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="color-scheme" content="light dark">
   <meta name="description" content="Cloudflare 三网优选 IP 聚合池">
-  <title>cook-speed-dns · CF 优选 IP</title>
+  <title>Cook优选 · 网络状态与 Cloudflare CDN 优选 IP</title>
   <style>
     :root {
       font-family: -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif;
@@ -89,27 +89,133 @@ INDEX_HTML = r"""<!doctype html>
   .dns-meta{margin:0 0 13px}
   .dns-panel .btn:disabled{opacity:.45;cursor:not-allowed}
   @media(max-width:760px){.dns-grid{grid-template-columns:1fr}.ip-value{font-size:20px}.dns-body,.top-panel .dns-grid{padding:14px}.dns-panel .panel-head{flex-direction:column;align-items:flex-start}}
+  
+/* Orange network-dashboard styling, adapted for Cook and its existing IP tools. */
+:root{color-scheme:light;--bg:#f8fafc;--card:#fff;--text:#202939;--muted:#798595;--line:#e3e8ee;--accent:#ff7d24;--good:#10b981;--warn:#ee9929;--shadow:0 2px 7px rgba(28,38,55,.075)}
+html{scroll-behavior:smooth;min-width:320px}
+html[data-theme=dark]{color-scheme:dark;--bg:#101720;--card:#1b2632;--text:#edf1f7;--muted:#a5afbe;--line:#344353;--accent:#ff9f58;--shadow:0 3px 14px rgba(0,0,0,.25)}
+body{background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+#network,#latency,#pool,#dns-panel,#api,#sources-card{scroll-margin-top:78px}
+.wrap{width:min(1260px,calc(100% - 40px));padding:28px 0 65px}
+.site-header{position:sticky;top:0;z-index:55;background:var(--card);border-bottom:1px solid var(--line)}
+.site-nav{max-width:1660px;margin:auto;padding:0 22px;min-height:55px;display:flex;align-items:center;gap:14px}
+.site-brand{display:flex;align-items:center;gap:6px;white-space:nowrap;color:#fc7b21;text-decoration:none;font-size:18px;font-weight:820}
+.site-cloud{font-size:25px;line-height:1}.brand-hint{border-left:1px solid var(--line);padding-left:13px;font-size:12px;color:var(--muted);font-weight:650;white-space:nowrap}
+.site-links{display:flex;gap:8px;align-items:stretch;margin-left:auto}
+.site-links a{display:block;white-space:nowrap;border-bottom:2px solid transparent;padding:16px 8px 13px;text-decoration:none;font-weight:650;font-size:13px;color:var(--muted)}
+.site-links a:hover,.site-links .current{color:var(--accent)}.site-links .current{border-color:var(--accent)}
+.theme-toggle{display:grid;place-items:center;flex:none;width:39px;height:39px;border:1px solid var(--line);border-radius:50%;background:var(--card);color:var(--accent);font-size:23px;cursor:pointer}
+.promo{display:flex;align-items:center;gap:15px;border:1px solid #ff8f43;border-radius:15px;background:linear-gradient(100deg,rgba(255,128,35,.13),rgba(255,140,43,.045));padding:18px 23px;box-shadow:0 9px 23px rgba(246,135,40,.08)}
+.promo-mark{display:grid;place-items:center;width:48px;height:48px;flex:none;background:rgba(255,144,43,.15);border:1px solid rgba(255,138,49,.35);border-radius:12px;font-size:24px}
+.promo-copy{flex:1;min-width:0}.promo-copy b{display:block;color:var(--accent);font-size:18px}.promo-copy p{color:var(--muted);font-size:13px;margin:5px 0 0}
+.promo-cta{display:block;flex:none;border-radius:50px;padding:12px 20px;color:#fff!important;text-decoration:none;font-weight:750;white-space:nowrap;background:linear-gradient(110deg,#ff7b25,#ff9e38);box-shadow:0 6px 15px rgba(243,123,30,.22)}
+.net-panel{margin:48px 0 0;border-radius:16px;padding:24px 25px;box-shadow:var(--shadow);backdrop-filter:none}
+.net-title{display:flex;justify-content:space-between;align-items:center;gap:10px}.net-title h1{font-size:21px;letter-spacing:-.025em;line-height:1.4;margin:0;display:flex;gap:7px;align-items:center}.net-title h1 span{font-size:21px}
+.title-line{height:2px;background:var(--line);margin:14px 0 12px}.title-line span{display:block;width:65px;height:2px;background:var(--accent)}
+.net-description{font-size:13px;color:var(--muted);margin:0 0 29px;line-height:1.75}
+.mini-button{border:1px solid var(--line);background:var(--card);color:var(--accent);font-size:12px;padding:7px 10px;border-radius:9px;cursor:pointer}.mini-button:hover{border-color:var(--accent)}.mini-button:disabled{opacity:.5;cursor:wait}
+.net-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px}
+.net-stat{min-width:0;border:1px solid var(--line);border-radius:13px;padding:13px 14px 14px;background:var(--card);min-height:155px;overflow:hidden}
+.stat-head{display:flex;align-items:center;gap:7px;border-bottom:1px solid var(--line);padding-bottom:12px;min-width:0}
+.stat-head i{width:9px;height:9px;border-radius:50%;background:var(--good);flex:none}.stat-head b{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.stat-head small{font-size:10px;color:var(--muted);white-space:nowrap}
+.net-stat>strong{display:block;font-size:23px;font-weight:780;line-height:1.3;letter-spacing:-.035em;margin:14px 0 6px;overflow-wrap:anywhere}
+.net-stat>p{font-size:12px;color:var(--muted);margin:0 0 5px;overflow-wrap:anywhere}.net-stat>small{font-size:11px;color:var(--muted)}
+.ping-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:20px 0 11px}.ping-head strong{font-size:14px}.ping-head small{font-size:11px;color:var(--muted)}
+.ping-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px}
+.ping-card{min-width:0;display:flex;gap:9px;align-items:center;padding:13px 12px;min-height:79px;border:1px solid var(--line);border-radius:13px;box-shadow:0 2px 2px rgba(26,38,55,.04);background:var(--card)}
+.ping-icon{height:33px;width:33px;flex:none;border:1px solid var(--line);border-radius:9px;display:grid;place-items:center;font-weight:850;font-size:14px}.ping-blue{color:#297bff}.ping-pink{color:#ef70a6}.ping-green{color:#16b959}.ping-orange{color:#fa781a}.ping-dark{color:var(--text)}.ping-yellow{color:#e6b224}.ping-red{color:#f23232}
+.ping-name{min-width:0;display:flex;flex-direction:column;font-size:13px;font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ping-name small{font-size:10px;color:var(--good);font-weight:500}
+.ping-card:nth-child(n+5) .ping-name small{color:#459df1}
+.ping-time{font-size:18px;margin-left:auto;white-space:nowrap;font-weight:850;font-style:italic;color:#fa891d;font-variant-numeric:tabular-nums}
+.ping-time.pending{font-style:normal;font-size:11px;font-weight:650;color:var(--muted)}.ping-time.fail{font-size:11px;letter-spacing:0;font-weight:750;font-style:normal;color:#e73d53}
+.ping-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:12px 0 0;font-size:11px;line-height:1.6;color:var(--muted)}
+.data-head{margin-top:42px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.data-head h2{font-size:23px;margin:4px 0 2px}.data-head p{font-size:13px;margin:0;color:var(--muted)}.eyebrow{font-size:10px;letter-spacing:.15em;font-weight:850;color:var(--accent)}
+.stats{margin:16px 0}.card,.panel{border-radius:14px;background:var(--card);backdrop-filter:none}.card .value{font-size:27px}
+.tab.active{background:var(--accent);border-color:var(--accent);color:#fff}.tab:hover,.btn:hover{border-color:var(--accent)}.copy,.btn{color:var(--accent)}
+.dns-panel,.top-panel{margin:17px 0}footer{padding-top:16px}
+@media(max-width:1100px){.brand-hint{display:none}.site-links{gap:0}.site-links a{padding-left:6px;padding-right:6px}.net-stats,.ping-grid{gap:10px}.net-stat>strong{font-size:20px}.ping-name{font-size:12px}.ping-time{font-size:16px}}
+@media(max-width:820px){.site-nav{padding:0 13px}.site-links a span{display:none}.net-stats,.ping-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.net-panel{margin-top:23px}.site-links a{font-size:16px}.data-head{align-items:flex-start}}
+@media(max-width:580px){
+.wrap{width:calc(100% - 24px);padding-top:16px}.site-nav{gap:8px;min-height:53px}.site-brand{font-size:15px}.site-cloud{font-size:20px}.site-links a{font-size:13px;padding-left:4px;padding-right:4px}.theme-toggle{width:34px;height:34px;font-size:18px}
+.promo{padding:13px;gap:10px;flex-wrap:wrap}.promo-mark{height:41px;width:41px}.promo-copy{flex-basis:calc(100% - 54px)}.promo-copy b{font-size:15px}.promo-copy p{font-size:11px}.promo-cta{margin-left:51px;padding:8px 14px;font-size:12px}
+.net-panel{padding:15px;margin-top:20px}.net-title h1{font-size:18px}.net-description{font-size:12px;margin-bottom:17px}
+.net-stats,.ping-grid{gap:9px}.net-stat{min-height:133px;padding:11px 10px}.stat-head b{font-size:11px}.stat-head small{display:none}.net-stat>strong{font-size:17px}.net-stat>p{font-size:11px}.net-stat>small{font-size:10px}
+.ping-card{gap:6px;padding:11px 8px;min-height:68px}.ping-icon{width:27px;height:27px;font-size:12px}.ping-name{font-size:11px}.ping-time{font-size:13px}.ping-time.fail{font-size:10px}.ping-head{align-items:flex-start}.ping-head small{font-size:10px}
+.data-head{margin-top:30px;flex-direction:column}.stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.card .value{font-size:22px}
+}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
   </style>
 </head>
 <body>
-<main class="wrap">
-  <div class="top">
-    <div>
-      <h1>cook-speed-dns</h1>
-      <p class="lead">多来源聚合 · 三网分类 · Cloudflare 官方 IPv4 网段校验 · 自动更新</p>
-    </div>
-    <div class="badge"><span class="dot"></span><span id="updated">读取状态…</span></div>
+<header class="site-header">
+  <div class="site-nav">
+    <a class="site-brand" href="#network"><span class="site-cloud">☁</span> Cook优选</a>
+    <span class="brand-hint">Cloudflare CDN 节点优选</span>
+    <nav class="site-links" aria-label="主导航">
+      <a href="#network" class="current">◉ <span>网络状态</span></a>
+      <a href="#pool">☆ <span>优选 IP</span></a>
+      <a href="#latency">⌁ <span>分流测试</span></a>
+      <a href="#api">⌘ <span>API</span></a>
+      <a href="#sources-card">▦ <span>更多资源</span></a>
+    </nav>
+    <button id="theme-toggle" class="theme-toggle" type="button" aria-label="切换深色模式"><span id="theme-icon">☾</span></button>
   </div>
-
+</header>
+<main class="wrap">
+  <section class="promo">
+    <span class="promo-mark">⚡</span>
+    <div class="promo-copy"><b>在线优选 Cloudflare 节点</b><p>聚合中国电信、联通、移动三网优选 IP，自动更新 DNS，开放 TXT / JSON API。</p></div>
+    <a class="promo-cta" href="#pool">查看优选 IP ↗</a>
+  </section>
+  <section class="panel net-panel" id="network">
+    <div class="net-title"><h1><span>🌐</span> 当前网络信息</h1><button class="mini-button" type="button" id="network-recheck">↻ 重新检测</button></div>
+    <div class="title-line"><span></span></div>
+    <p class="net-description">从浏览器查询当前出口网络信息，并检测常用网站的资源加载耗时。IP 默认脱敏；响应时间不是 ICMP Ping，也不代表中国三网服务器测速。</p>
+    <div class="net-stats">
+      <article class="net-stat">
+        <div class="stat-head"><i></i><b>公网 IP</b><small>浏览器查询</small></div>
+        <strong id="net-ip">检测中…</strong><p id="net-ip-region">正在获取网络信息</p><small id="net-ip-source">Cloudflare / ipwho.is</small>
+      </article>
+      <article class="net-stat">
+        <div class="stat-head"><i></i><b>网络运营商</b><small>ISP / ASN</small></div>
+        <strong id="net-isp">检测中…</strong><p id="net-isp-region">正在获取运营商信息</p><small>取决于当前代理 / 网络出口</small>
+      </article>
+      <article class="net-stat">
+        <div class="stat-head"><i></i><b>Cloudflare 接入</b><small>Colo</small></div>
+        <strong id="net-colo">检测中…</strong><p id="net-colo-info">正在查询接入节点</p><small>仅代表测速服务的接入点</small>
+      </article>
+      <article class="net-stat">
+        <div class="stat-head"><i></i><b>CDN DNS 解析</b><small>DNS Only</small></div>
+        <strong id="net-dns">查询中…</strong><p>cdn.yigeyao.com</p><small>只读查询，不修改后台解析</small>
+      </article>
+    </div>
+    <div class="ping-head"><strong>常用站点连通性</strong><small>浏览器资源加载时间 · 不是 ICMP Ping</small></div>
+    <div class="ping-grid" id="latency">
+      <div class="ping-card"><span class="ping-icon ping-blue">♪</span><span class="ping-name">字节跳动<small>国内</small></span><b class="ping-time pending" id="ping-douyin">待检测</b></div>
+      <div class="ping-card"><span class="ping-icon ping-pink">B</span><span class="ping-name">Bilibili<small>国内</small></span><b class="ping-time pending" id="ping-bilibili">待检测</b></div>
+      <div class="ping-card"><span class="ping-icon ping-green">微</span><span class="ping-name">微信<small>国内</small></span><b class="ping-time pending" id="ping-wechat">待检测</b></div>
+      <div class="ping-card"><span class="ping-icon ping-orange">淘</span><span class="ping-name">淘宝<small>国内</small></span><b class="ping-time pending" id="ping-taobao">待检测</b></div>
+      <div class="ping-card"><span class="ping-icon ping-dark">G</span><span class="ping-name">GitHub<small>国际</small></span><b class="ping-time pending" id="ping-github">待检测</b></div>
+      <div class="ping-card"><span class="ping-icon ping-yellow">JS</span><span class="ping-name">jsDelivr<small>国际</small></span><b class="ping-time pending" id="ping-jsdelivr">待检测</b></div>
+      <div class="ping-card"><span class="ping-icon ping-orange">☁</span><span class="ping-name">Cloudflare<small>国际</small></span><b class="ping-time pending" id="ping-cloudflare">待检测</b></div>
+      <div class="ping-card"><span class="ping-icon ping-red">▶</span><span class="ping-name">YouTube<small>国际</small></span><b class="ping-time pending" id="ping-youtube">待检测</b></div>
+    </div>
+    <div class="ping-foot"><span id="ping-status" role="status">正在检测公开图标资源，部分站点可能阻止访问。</span><button class="mini-button" id="ping-retry" type="button">↻ 重新测速</button></div>
+  </section>
+  <section class="data-head" id="pool">
+    <div><span class="eyebrow">OPTIMIZED IP POOL</span><h2>三网优选 IP</h2><p>多来源数据自动聚合，并筛选网站 HTTPS 兼容的 CDN IP。</p></div>
+    <div class="badge"><span class="dot"></span><span id="updated">读取状态…</span></div>
+  </section>
   <section class="stats">
-    <div class="card"><div class="label">电信</div><div class="value" id="count-ct">—</div></div>
-    <div class="card"><div class="label">联通</div><div class="value" id="count-cu">—</div></div>
-    <div class="card"><div class="label">移动</div><div class="value" id="count-cmcc">—</div></div>
-    <div class="card"><div class="label">全部</div><div class="value" id="count-all">—</div></div>
+    <div class="card"><div class="label">中国电信 · Telecom</div><div class="value" id="count-ct">—</div></div>
+    <div class="card"><div class="label">中国联通 · Unicom</div><div class="value" id="count-cu">—</div></div>
+    <div class="card"><div class="label">中国移动 · Mobile</div><div class="value" id="count-cmcc">—</div></div>
+    <div class="card"><div class="label">全部候选 · Total</div><div class="value" id="count-all">—</div></div>
   </section>
 
-
-  <section class="panel dns-panel" aria-labelledby="dns-title">
+  <section class="panel dns-panel" id="dns-panel" aria-labelledby="dns-title">
     <div class="panel-head">
       <div>
         <strong id="dns-title">cdn.yigeyao.com · 当前 DNS 解析 IP</strong>
@@ -160,18 +266,118 @@ INDEX_HTML = r"""<!doctype html>
     </div>
   </section>
 
-  <details class="card sources">
+  <details class="card sources" id="sources-card">
     <summary>数据源状态</summary>
     <div id="sources" class="source-list"></div>
   </details>
 
-  <footer>
+  <footer id="api">
     静态接口：<code>./api/ct.txt</code> · <code>./api/cu.txt</code> · <code>./api/cmcc.txt</code> · <code>./api/all.txt</code><br>
     部署到 Cloudflare Pages 后支持兼容接口：<code>/ct?ips=6</code>、<code>/cu?ips=6</code>、<code>/cmcc?ips=8</code>、<code>/all?ips=70</code>
   </footer>
 </main>
 <script>
 const titles={all:"全部优选",ct:"中国电信",cu:"中国联通",cmcc:"中国移动"};
+
+// Browser-side diagnostics. IP is masked; no measurement data is uploaded to this project.
+function maskedVisitorIp(ip){
+  if(typeof ip!=="string"||!ip)return "暂不可用";
+  if(ip.includes(":"))return ip.split(":").slice(0,2).join(":")+"::****";
+  const bits=ip.split(".");
+  return looksLikeIpv4(ip)?bits[0]+"."+bits[1]+".***.***":"暂不可用";
+}
+function valueOrUnknown(val){return typeof val==="string"&&val.trim()?val.trim():"暂不可用"}
+async function browserJson(url){
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),6500);
+  try{
+    const r=await fetch(url,{cache:"no-store",signal:controller.signal});
+    if(!r.ok)throw Error("HTTP "+r.status);
+    return await r.json();
+  }finally{clearTimeout(timer)}
+}
+async function loadNetworkInfo(){
+  const button=document.getElementById("network-recheck");
+  button.disabled=true;
+  for(const id of ["net-ip","net-isp","net-colo"]) document.getElementById(id).textContent="检测中…";
+  try{
+    const result=await Promise.allSettled([browserJson("https://speed.cloudflare.com/meta"),browserJson("https://ipwho.is/")]);
+    const cf=result[0].status==="fulfilled"?result[0].value:null;
+    const geo=result[1].status==="fulfilled"&&result[1].value.success!==false?result[1].value:null;
+    const ip=cf?.clientIp||cf?.ip||geo?.ip||"";
+    const isp=geo?.connection?.isp||geo?.connection?.org||cf?.asOrganization||"";
+    const asn=geo?.connection?.asn||cf?.asn||"";
+    const place=[geo?.country||cf?.country,geo?.region||cf?.city].filter(Boolean).join(" · ");
+    document.getElementById("net-ip").textContent=maskedVisitorIp(ip);
+    document.getElementById("net-ip-region").textContent=place||"地区未知";
+    document.getElementById("net-ip-source").textContent=cf?.clientIp?"数据来源：Cloudflare":geo?.ip?"数据来源：ipwho.is":"接口不可用或被拦截";
+    document.getElementById("net-isp").textContent=valueOrUnknown(isp);
+    document.getElementById("net-isp-region").textContent=asn?"ASN "+String(asn):"ASN 暂不可用";
+    document.getElementById("net-colo").textContent=valueOrUnknown(cf?.colo||cf?.airportIata||"");
+    document.getElementById("net-colo-info").textContent=cf?.colo?"Cloudflare Edge / "+(cf?.city||"位置未知"):"测速服务接口不可用";
+  }finally{button.disabled=false}
+}
+const endpointIcons=[
+  ["douyin","https://www.douyin.com/favicon.ico"],["bilibili","https://www.bilibili.com/favicon.ico"],
+  ["wechat","https://weixin.qq.com/favicon.ico"],["taobao","https://www.taobao.com/favicon.ico"],
+  ["github","https://github.com/favicon.ico"],["jsdelivr","https://www.jsdelivr.com/favicon.ico"],
+  ["cloudflare","https://www.cloudflare.com/favicon.ico"],["youtube","https://www.youtube.com/favicon.ico"]
+];
+function checkIcon(url){
+  return new Promise(resolve=>{
+    const img=new Image();
+    const start=performance.now();
+    let finished=false;
+    function done(state){
+      if(finished)return;
+      finished=true;clearTimeout(timer);img.onload=null;img.onerror=null;
+      resolve({state:state,ms:Math.round(performance.now()-start)});
+    }
+    const timer=setTimeout(()=>done("timeout"),5500);
+    img.onload=()=>done("ok");
+    img.onerror=()=>done("error");
+    img.src=url+(url.includes("?")?"&":"?")+"probe="+Date.now();
+  });
+}
+let pingRound=0;
+async function runPings(){
+  const seq=++pingRound;
+  const button=document.getElementById("ping-retry");
+  button.disabled=true;
+  document.getElementById("ping-status").textContent="正在通过浏览器加载公开图标资源…";
+  endpointIcons.forEach(([id])=>{
+    const e=document.getElementById("ping-"+id);e.className="ping-time pending";e.textContent="检测中…";
+  });
+  const result=await Promise.all(endpointIcons.map(async ([id,url])=>{
+    const r=await checkIcon(url);
+    if(seq!==pingRound)return r;
+    const e=document.getElementById("ping-"+id);
+    e.className="ping-time"+(r.state==="ok"?"":" fail");
+    e.textContent=r.state==="ok"?r.ms+"ms":r.state==="timeout"?"超时":"不可用";
+    e.title=r.state==="ok"?"浏览器加载站点图标资源耗时":"网络、跨域、防盗链或文件不存在均可能导致失败";
+    return r;
+  }));
+  if(seq!==pingRound)return;
+  const success=result.filter(x=>x.state==="ok").length;
+  document.getElementById("ping-status").textContent="完成 "+success+"/"+result.length+" 项。仅供参考：图标缓存、代理和站点访问策略可能影响耗时。";
+  button.disabled=false;
+}
+function applyTheme(theme){
+  document.documentElement.dataset.theme=theme;
+  document.getElementById("theme-icon").textContent=theme==="dark"?"☀":"☾";
+  document.getElementById("theme-toggle").setAttribute("aria-label",theme==="dark"?"切换浅色模式":"切换深色模式");
+}
+try{applyTheme(localStorage.getItem("cook-theme")==="dark"?"dark":"light")}catch(e){applyTheme("light")}
+document.getElementById("theme-toggle").addEventListener("click",()=>{
+  const theme=document.documentElement.dataset.theme==="dark"?"light":"dark";
+  applyTheme(theme);
+  try{localStorage.setItem("cook-theme",theme)}catch(e){}
+});
+document.getElementById("network-recheck").addEventListener("click",loadNetworkInfo);
+document.getElementById("ping-retry").addEventListener("click",runPings);
+loadNetworkInfo();
+runPings();
+
 let current="all", currentItems=[];
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 async function loadStatus(){
@@ -253,6 +459,7 @@ async function refreshDns(){
         const additions=addresses.filter(ip=>!lastIps.includes(ip));
         const removals=lastIps.filter(ip=>!addresses.includes(ip));
         activeDnsIps=addresses;
+        document.getElementById("net-dns").textContent=addresses.length+" 条 A 记录";
         renderIpTiles(grid,addresses.map((ip,i)=>({label:"当前 A 记录 "+(i+1),ip,detail:"DNS Only / 443 候选入口"})));
         const changeNote=!lastIps.length
           ?"首次查询"
@@ -269,6 +476,7 @@ async function refreshDns(){
       }
     }
     activeDnsIps=[];
+    document.getElementById("net-dns").textContent="查询失败";
     grid.innerHTML='<div class="dns-note">无法取得公网 DNS 结果。可能是当前网络阻止了 DNS-over-HTTPS 请求，可稍后点「重新查询」重试。</div>';
     meta.textContent="DNS 查询暂不可用，下面仍可查看最新聚合优选 IP。";
   }finally{
