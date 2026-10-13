@@ -49,12 +49,12 @@ class DNSTests(unittest.TestCase):
 
     def test_exact_dns_pagination(self):
         sess = FakeSession([
-            FakeResponse([{"id": "b", "name": "cdn.jia.nz", "type": "A", "content": "104.17.1.1"}]),
-            FakeResponse([{"id": "a", "name": "cdn.jia.nz", "type": "A", "content": "104.17.1.2"}]),
+            FakeResponse([{"id": "b", "name": "cdn.yigeyao.com", "type": "A", "content": "104.17.1.1"}]),
+            FakeResponse([{"id": "a", "name": "cdn.yigeyao.com", "type": "A", "content": "104.17.1.2"}]),
         ])
         sess.responses[0].data["result_info"] = {"total_pages": 2}
         sess.responses[1].data["result_info"] = {"total_pages": 2}
-        found = dns_records(sess, "zone", "cdn.jia.nz", "token")
+        found = dns_records(sess, "zone", "cdn.yigeyao.com", "token")
         self.assertEqual([record["id"] for record in found], ["a", "b"])
         self.assertEqual(sess.calls[1][2]["params"]["page"], 2)
 
@@ -64,14 +64,14 @@ class DNSTests(unittest.TestCase):
             {"id": "b", "content": "104.17.1.1", "proxied": False},
         ]
         sess = FakeSession([])
-        self.assertEqual(sync_dns(sess, "zone", "cdn.jia.nz", "token", records,
+        self.assertEqual(sync_dns(sess, "zone", "cdn.yigeyao.com", "token", records,
                                   ["104.17.1.1", "104.17.1.2"]), [])
         self.assertFalse(sess.calls)
 
     def test_patch_only_changes_address(self):
         records = [{"id": "a", "content": "104.17.1.1", "proxied": False}]
         sess = FakeSession([FakeResponse({})])
-        sync_dns(sess, "zone", "cdn.jia.nz", "token", records, ["104.17.1.2"])
+        sync_dns(sess, "zone", "cdn.yigeyao.com", "token", records, ["104.17.1.2"])
         self.assertEqual(sess.calls[0][0], "PATCH")
         self.assertEqual(sess.calls[0][2]["json"], {"content": "104.17.1.2"})
 
@@ -79,12 +79,12 @@ class DNSTests(unittest.TestCase):
         records = [{"id": "a", "content": "104.17.1.1", "proxied": False}]
         with self.assertRaises(DnsSyncError):
             sync_dns(FakeSession([FakeResponse({}, False)]),
-                     "zone", "cdn.jia.nz", "token", records, ["104.17.1.2"])
+                     "zone", "cdn.yigeyao.com", "token", records, ["104.17.1.2"])
 
     def test_creates_missing_records(self):
         records = [{"id": "a", "content": "104.17.1.1", "proxied": False}]
         sess = FakeSession([FakeResponse({}), FakeResponse({})])
-        changes = sync_dns(sess, "zone", "cdn.jia.nz", "token", records,
+        changes = sync_dns(sess, "zone", "cdn.yigeyao.com", "token", records,
                            ["104.17.1.2", "104.17.1.3"])
         self.assertEqual(len(changes), 2)
         self.assertEqual([call[0] for call in sess.calls], ["PATCH", "POST"])
@@ -199,20 +199,20 @@ class DNSTests(unittest.TestCase):
 
     def test_shrink_to_thirty_dns_records(self):
         records = [
-            {"id": str(i), "name": "cdn.jia.nz", "type": "A",
+            {"id": str(i), "name": "cdn.yigeyao.com", "type": "A",
              "content": f"104.17.1.{i + 1}", "proxied": False}
             for i in range(32)
         ]
         desired = [r["content"] for r in records[:30]]
         sess = FakeSession([FakeResponse({}), FakeResponse({})])
-        changes = sync_dns(sess, "zone", "cdn.jia.nz", "token", records, desired)
+        changes = sync_dns(sess, "zone", "cdn.yigeyao.com", "token", records, desired)
         self.assertEqual(len(changes), 2)
         self.assertEqual([call[0] for call in sess.calls], ["DELETE", "DELETE"])
 
     def test_bootstrap_empty_cdn_with_thirty_records(self):
         desired = [f"104.17.1.{i + 1}" for i in range(30)]
         session = FakeSession([FakeResponse({}) for _ in desired])
-        changes = sync_dns(session, "zone", "cdn.jia.nz", "token", [], desired)
+        changes = sync_dns(session, "zone", "cdn.yigeyao.com", "token", [], desired)
         self.assertEqual(len(changes), 30)
         self.assertEqual([method for method, _, _ in session.calls], ["POST"] * 30)
         self.assertTrue(all(call[2]["json"]["proxied"] is False for call in session.calls))
@@ -228,7 +228,7 @@ class DNSTests(unittest.TestCase):
     def test_proxy_mode_is_protected(self):
         records = [{"id": "a", "content": "104.17.1.1", "proxied": True}]
         with self.assertRaises(DnsSyncError):
-            sync_dns(FakeSession([]), "zone", "cdn.jia.nz", "token", records, ["104.17.1.2"])
+            sync_dns(FakeSession([]), "zone", "cdn.yigeyao.com", "token", records, ["104.17.1.2"])
 
 
 if __name__ == "__main__":

@@ -317,8 +317,8 @@ def compatible_with_sites(ip, hosts, path="/", checker=None):
 
 def sync_dns(session, zone_id, dns_name, token, records, desired):
     """Update, create or remove only exact-name DNS-only A records."""
-    if not records and (dns_name != "cdn.jia.nz" or len(desired) != 30):
-        raise DnsSyncError("Bootstrapping an empty DNS name is permitted only for 30 cdn.jia.nz A records")
+    if not records and (dns_name != "cdn.yigeyao.com" or len(desired) != 30):
+        raise DnsSyncError("Bootstrapping an empty DNS name is permitted only for 30 cdn.yigeyao.com A records")
     if not desired:
         raise DnsSyncError("No validated IPs; refusing to change DNS")
     if len(set(desired)) != len(desired):
@@ -353,7 +353,7 @@ def sync_dns(session, zone_id, dns_name, token, records, desired):
     for ip in missing_ips[len(unused):]:
         cf_api(session, "POST", f"/zones/{zone_id}/dns_records", token,
                json={"type": "A", "name": dns_name, "content": ip, "ttl": 1,
-                     "proxied": False, "comment": "[CF-IP] cook-speed-dns 优选地址自动维护"})
+                     "proxied": False, "comment": "[CF-IP] cook-speed-dns | 中国大陆三网优选 IP 池 | CDN 主入口 | 自动维护"})
         changed.append((None, ip))
         print(f"Created {dns_name}: {ip}")
 

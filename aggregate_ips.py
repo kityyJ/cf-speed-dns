@@ -112,7 +112,7 @@ INDEX_HTML = r"""<!doctype html>
   <section class="panel dns-panel" aria-labelledby="dns-title">
     <div class="panel-head">
       <div>
-        <strong id="dns-title">cdn.jia.nz · 当前 DNS 解析 IP</strong>
+        <strong id="dns-title">cdn.yigeyao.com · 当前 DNS 解析 IP</strong>
         <div class="dns-note">只读查询公网 A 记录，不修改 Cloudflare 后台 DNS。IP 使用固定排序；不同公共 DNS 的缓存可能存在差异。</div>
       </div>
       <div class="actions">
@@ -203,7 +203,7 @@ document.querySelectorAll(".tab").forEach(x=>x.onclick=()=>loadGroup(x.dataset.g
 document.querySelector("#rows").onclick=e=>{const v=e.target.dataset.copy;if(v)navigator.clipboard.writeText(v)};
 document.querySelector("#copy-list").onclick=()=>navigator.clipboard.writeText(currentItems.map(x=>`${x.ip}:${x.port}#${x.tag}`).join("\n"));
 
-const dnsHostname="cdn.jia.nz";
+const dnsHostname="cdn.yigeyao.com";
 let activeDnsIps=[];
 
 function compareIpv4(a,b){

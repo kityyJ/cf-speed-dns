@@ -14,7 +14,7 @@ from dnscf import audit_site_https, dns_records
 
 
 HOSTS = ("www.jia.nz", "cook.jia.nz")
-CDN_NAME = "cdn.jia.nz"
+CDN_NAME = "cdn.yigeyao.com"
 
 
 def main():

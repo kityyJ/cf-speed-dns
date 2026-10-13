@@ -14,7 +14,7 @@ on:
       - ".github/workflows/dns_cf.yml"
 
 concurrency:
-  group: cdn-jia-nz-dns
+  group: cdn-yigeyao-com-dns
   cancel-in-progress: false
 
 permissions:
@@ -47,8 +47,8 @@ jobs:
       - name: Update Cloudflare DNS
         env:
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-          CF_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
-          CF_DNS_NAME: cdn.jia.nz
+          CF_ZONE_ID: "5f62be379eeeaf9a9334c903c0b7f5ba" # Public zone ID, token remains in GitHub Secrets
+          CF_DNS_NAME: cdn.yigeyao.com
           CF_DNS_RECORD_COUNT: "30"
           CF_DNS_MAX_ROTATIONS: "6"
           # HTTPS site check is diagnostic only; Runner != mainland China probe.
