@@ -1,16 +1,16 @@
 {
-  "generated_at": "2026-10-13 01:58:08 UTC",
+  "generated_at": "2026-10-13 04:11:19 UTC",
   "cloudflare_range_source": "live",
   "cloudflare_only": true,
   "counts": {
-    "ct": 54,
+    "ct": 56,
     "cu": 120,
-    "cmcc": 51,
-    "all": 215
+    "cmcc": 56,
+    "all": 229
   },
   "healthy_sources": 20,
   "failed_sources": 0,
-  "filtered_slow": 63,
+  "filtered_slow": 61,
   "sources": [
     {
       "group": "ct",
@@ -126,7 +126,7 @@
       "name": "CFYes 三网",
       "url": "https://bestcf.pages.dev/cfyes/ipv4.txt",
       "ok": true,
-      "count": 17,
+      "count": 12,
       "error": ""
     },
     {
