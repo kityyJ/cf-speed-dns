@@ -1,10 +1,10 @@
 {
-  "generated_at": "2026-10-13 04:36:02 UTC",
+  "generated_at": "2026-10-13 04:43:16 UTC",
   "group": "ct",
-  "count": 55,
+  "count": 56,
   "items": [
     {
-      "ip": "162.159.153.217",
+      "ip": "162.159.153.216",
       "port": 443,
       "tag": "CT",
       "source": "CM 电信优选"
@@ -16,19 +16,7 @@
       "source": "CM CloudFlareYes"
     },
     {
-      "ip": "162.159.152.205",
-      "port": 443,
-      "tag": "CT",
-      "source": "CM 电信优选"
-    },
-    {
-      "ip": "162.159.46.225",
-      "port": 443,
-      "tag": "CT-Default",
-      "source": "CM CloudFlareYes"
-    },
-    {
-      "ip": "162.159.153.239",
+      "ip": "162.159.153.212",
       "port": 443,
       "tag": "CT",
       "source": "CM 电信优选"
@@ -40,7 +28,7 @@
       "source": "CM CloudFlareYes"
     },
     {
-      "ip": "162.159.153.156",
+      "ip": "162.159.153.209",
       "port": 443,
       "tag": "CT",
       "source": "CM 电信优选"
@@ -52,7 +40,19 @@
       "source": "CM CloudFlareYes"
     },
     {
-      "ip": "162.159.152.31",
+      "ip": "162.159.152.155",
+      "port": 443,
+      "tag": "CT",
+      "source": "CM 电信优选"
+    },
+    {
+      "ip": "104.18.120.211",
+      "port": 443,
+      "tag": "CT-Default",
+      "source": "CM CloudFlareYes"
+    },
+    {
+      "ip": "162.159.153.239",
       "port": 443,
       "tag": "CT",
       "source": "CM 电信优选"
@@ -64,7 +64,7 @@
       "source": "CM CloudFlareYes"
     },
     {
-      "ip": "162.159.152.11",
+      "ip": "162.159.152.69",
       "port": 443,
       "tag": "CT",
       "source": "CM 电信优选"
@@ -92,6 +92,12 @@
       "port": 443,
       "tag": "微测优选 | 电信 | FRA | 162.159.149.143",
       "source": "WeTest 三网"
+    },
+    {
+      "ip": "162.159.46.225",
+      "port": 443,
+      "tag": "CFYes优选 | 电信 | 162.159.46.225",
+      "source": "CFYes 三网"
     },
     {
       "ip": "172.64.159.207",
