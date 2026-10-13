@@ -156,11 +156,19 @@ data/status.json
 
 - GitHub Pages: https://kityyj.github.io/cook-speed-dns/
 - `www.jia.nz`、`cook.jia.nz`、`paycn.jia.nz`、`status.jia.nz` → `cdn.yigeyao.com`（DNS Only CNAME）→ 30 个官方 Cloudflare IPv4 A 记录。
-- 新 CDN 在 Cloudflare `yigeyao.com` 区域管理，所有新增 A 记录带 `[CF-IP]` 中文用途备注。旧 `cdn.jia.nz` 在迁移完成后作为兼容 CNAME 指向新 CDN（不再维护独立 IP 池）。
+- 新 CDN 在 Cloudflare `yigeyao.com` 区域管理，所有新建的 30 条 A 记录均带 `[CF-IP]` 中文用途备注。**目前旧 `cdn.jia.nz` 的 30 条 A 记录暂时保留，作为回退**；待确认新区域自动更新正常后，再决定是否将旧域名改为兼容 CNAME。
 - 页面“当前 DNS 解析 IP”通过公网 DoH 查询 `cdn.yigeyao.com`，展示实际返回的 A 记录（可能有解析缓存）。
 - 页面“最新榜首”显示聚合池的三网候选 IP；它们不必与当前 DNS 完全一致。
 - `dns_cf.yml` 在每次运行时以 `CF_DNS_RECORD_COUNT=30` 为目标，自动补齐缺失 A 记录或清理超额记录，不开启 Cloudflare 代理。
 - DNS 记录创建和更新都依赖 GitHub Secrets 中具有 DNS 编辑权限的 Cloudflare API Token。
 - **注意：** 30 条 A 记录不是速度评分或智能负载均衡；DNS 响应会变大，部分客户端或递归解析器可能截断返回，客户端也不一定选最快地址。GitHub Runner 的 TCP 测试不能代表中国三网实际速度。
 
-> 跨区部署注意：GitHub Secret `CF_API_TOKEN` 必须具有 **yigeyao.com 区域 DNS 编辑权限**（权限最小化为 Zone DNS: Edit）；区域 ID 不是凭证，不需要写入 Secrets。不能仅因为旧 jia.nz 维护成功就假定此 Token 对新区域也有权限。
+> 跨区部署注意：GitHub Secret `CF_API_TOKEN` 必须具有 **yigeyao.com 区域 DNS 编辑权限**（Zone → DNS → Edit）；区域 ID 不是密钥，已配置在两个工作流中。旧 Token 只允许访问 jia.nz，新区域首次运行返回 HTTP 403，自动维护和审计会失败，直到更新 Secret。
+
+### 一次性修复 GitHub Token 权限
+
+1. [Cloudflare API Tokens](https://dash.cloudflare.com/profile/api-tokens)：创建 **Edit zone DNS** Token，将资源范围仅限 `yigeyao.com`（不需要把 Token 发到聊天或提交到仓库）。
+2. [GitHub Actions Secrets](https://github.com/kityyJ/cook-speed-dns/settings/secrets/actions)：更新仓库 Secret `CF_API_TOKEN` 的值。
+3. 重新运行 [DNS 自动维护](https://github.com/kityyJ/cook-speed-dns/actions/workflows/dns_cf.yml) 和 [HTTPS 全池审计](https://github.com/kityyJ/cook-speed-dns/actions/workflows/audit_websites.yml)，均成功后才能确认已完全自动化。
+
+迁移期间：`www.jia.nz`、`cook.jia.nz`、`paycn.jia.nz`、`status.jia.nz` 已直接指向 `cdn.yigeyao.com`，使用现有 30 个优选 IP；旧 `cdn.jia.nz` 暂不删除。
