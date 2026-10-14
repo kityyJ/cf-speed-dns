@@ -12,6 +12,7 @@ if [ -z "$HOST_A" ]; then
   exit 2
 fi
 if [ -z "$PER_PREFIX" ]; then PER_PREFIX=8; fi
+if [ -z "$MAX_CANDIDATES" ]; then MAX_CANDIDATES=0; fi
 if [ -z "$LIMIT" ]; then LIMIT=30; fi
 if [ -z "$MIN_PASS" ]; then MIN_PASS=1; fi
 if [ -z "$CONNECT_TIMEOUT" ]; then CONNECT_TIMEOUT=3; fi
@@ -20,10 +21,11 @@ if [ -z "$OUT_DIR" ]; then OUT_DIR=/jffs/cf-selfscan; fi
 
 case "$HOST_A" in *[!a-zA-Z0-9.-]* | '' | *..* ) echo "Bad HOST_A" >&2; exit 2;; esac
 case "$HOST_B" in *[!a-zA-Z0-9.-]* | *..* ) echo "Bad HOST_B" >&2; exit 2;; esac
-for value in "$PER_PREFIX" "$LIMIT" "$MIN_PASS" "$CONNECT_TIMEOUT" "$MAX_TIME"; do
+for value in "$PER_PREFIX" "$MAX_CANDIDATES" "$LIMIT" "$MIN_PASS" "$CONNECT_TIMEOUT" "$MAX_TIME"; do
   case "$value" in *[!0-9]* | '') echo "Numeric setting expected" >&2; exit 2;; esac
 done
 [ "$PER_PREFIX" -ge 1 ] && [ "$PER_PREFIX" -le 32 ] || exit 2
+[ "$MAX_CANDIDATES" -ge 0 ] && [ "$MAX_CANDIDATES" -le 512 ] || exit 2
 [ "$LIMIT" -ge 1 ] && [ "$LIMIT" -le 100 ] || exit 2
 [ "$MIN_PASS" -ge 1 ] && [ "$MIN_PASS" -le "$LIMIT" ] || exit 2
 [ "$CONNECT_TIMEOUT" -ge 1 ] && [ "$MAX_TIME" -ge "$CONNECT_TIMEOUT" ] || exit 2
@@ -45,6 +47,7 @@ mkdir "$WORK"
 trap 'rm -rf "$WORK" "$LOCK"' 0
 trap 'exit 2' 1 2 3 15
 
+echo "[1/4] Fetching Cloudflare official IPv4 ranges (maximum 20s) ..."
 # The one and only source of IP candidate ranges: Cloudflare itself.
 if ! curl -q --noproxy '*' -4 -fLsS --connect-timeout 5 --max-time 20 \
   https://www.cloudflare.com/ips-v4 -o "$WORK/official-cidrs"; then
@@ -57,6 +60,7 @@ if [ "$cidr_count" -lt 10 ] || [ "$cidr_count" -gt 100 ]; then
   exit 1
 fi
 
+echo "[2/4] Sampling IP candidates from $cidr_count official IPv4 ranges ..."
 # AWK uses numeric IPv4 math: choose random hosts within each official CIDR.
 awk -v per="$PER_PREFIX" -v seed="$(date +%s)" '
 function dotted(n, a,b,c,d) {
@@ -68,7 +72,7 @@ function dotted(n, a,b,c,d) {
 BEGIN { srand(seed); valid=0; bad=0 }
 {
   split($0, pair, "/")
-  n=split(pair[1], octets, ".")
+  n=split(pair[1], octets, "[.]")
   mask=pair[2]+0
   if (n!=4 || mask<8 || mask>30 || pair[2] !~ /^[0-9]+$/) { bad++; next }
   base=octets[1]*16777216+octets[2]*65536+octets[3]*256+octets[4]
@@ -82,8 +86,12 @@ BEGIN { srand(seed); valid=0; bad=0 }
 }
 END { if (bad>0 || valid<10) exit 1 }
 ' "$WORK/official-cidrs" | sort -u > "$WORK/candidates"
+if [ "$MAX_CANDIDATES" -gt 0 ]; then
+  head -n "$MAX_CANDIDATES" "$WORK/candidates" > "$WORK/limited"
+  mv "$WORK/limited" "$WORK/candidates"
+fi
 count=$(wc -l < "$WORK/candidates")
-if [ "$count" -lt 10 ]; then
+if [ "$count" -lt 1 ]; then
   echo "Candidate generation failed" >&2
   exit 1
 fi
@@ -106,21 +114,36 @@ probe() {
   printf '%s\n' "$converted"
 }
 
+echo "[3/4] Probing $count IPs in sequence via $HOST_A ${HOST_B:+and $HOST_B}."
+echo "Each HTTPS request may take up to ${MAX_TIME}s; a FAIL means timeout, bad certificate or non-2xx response."
 : > "$WORK/measured"
 examined=0
+accepted=0
 while IFS= read -r ip; do
   examined=$((examined+1))
-  first=$(probe "$ip" "$HOST_A") || continue
+  printf '[%s/%s] %s ... ' "$examined" "$count" "$ip"
+  if ! first=$(probe "$ip" "$HOST_A"); then
+    echo "FAIL ($HOST_A)"
+    continue
+  fi
   if [ -n "$HOST_B" ]; then
-    second=$(probe "$ip" "$HOST_B") || continue
+    if ! second=$(probe "$ip" "$HOST_B"); then
+      echo "FAIL ($HOST_B)"
+      continue
+    fi
   else
     second="$first"
   fi
   metrics=$(printf '%s\n%s\n' "$first" "$second" | awk -F '|' '
     {tcp+=$1; tls+=$2; ttfb+=$3; total+=$4; n++}
     END {if(n==2) printf "%.2f %.2f %.2f %.2f", tcp/2, tls/2, ttfb/2, total/2}')
-  [ -n "$metrics" ] && printf '%s %s\n' "$ip" "$metrics" >> "$WORK/measured"
-  if [ $((examined%30)) -eq 0 ]; then echo "Checked $examined/$count"; fi
+  if [ -n "$metrics" ]; then
+    printf '%s %s\n' "$ip" "$metrics" >> "$WORK/measured"
+    accepted=$((accepted+1))
+    echo "PASS (total ${metrics##* }ms; passed $accepted)"
+  else
+    echo "FAIL (invalid measurement)"
+  fi
 done < "$WORK/candidates"
 
 passed=$(wc -l < "$WORK/measured")
@@ -128,7 +151,8 @@ if [ "$passed" -lt "$MIN_PASS" ]; then
   echo "Only $passed IPs passed; previous results preserved" >&2
   exit 1
 fi
-sort -n -k4,4 "$WORK/measured" | head -n "$LIMIT" > "$WORK/best"
+echo "[4/4] Ranking by measured HTTPS TOTAL time and saving results ..."
+sort -n -k5,5 "$WORK/measured" | head -n "$LIMIT" > "$WORK/best"
 selected=$(wc -l < "$WORK/best")
 
 mkdir -p "$OUT_DIR"
