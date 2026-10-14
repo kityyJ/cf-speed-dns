@@ -38,7 +38,7 @@ jobs:
           python self_scan.py \
             --hosts "cook.jia.nz,www.jia.nz" \
             --label "github-hosted" \
-            --per-prefix 12 \
+            --per-prefix 32 \
             --workers 12 \
             --timeout 3.5 \
             --limit 30
