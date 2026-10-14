@@ -60,12 +60,41 @@ INDEX_HTML = r"""<!doctype html>
     .empty{padding:60px 16px!important;color:var(--muted);font-size:13px}.pagination{border-top:1px solid var(--border);padding:15px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:12px;color:var(--muted)}.pages{display:flex;align-items:center;gap:10px}.page-btn{background:var(--panel);color:var(--ink);border:1px solid var(--border);padding:7px 12px;border-radius:8px;font-size:12px}.page-btn:disabled{opacity:.35;cursor:not-allowed}.page-btn:not(:disabled):hover{border-color:var(--accent);color:var(--accent)}
     .bottom{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:16px 4px 0;color:var(--muted);font-size:11px;line-height:1.6}.bottom a:hover{color:var(--accent)}.toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,10px);opacity:0;pointer-events:none;background:var(--ink);color:var(--panel);border-radius:10px;padding:11px 18px;box-shadow:var(--shadow);font-size:12px;transition:opacity .2s,transform .2s}.toast.show{opacity:1;transform:translate(-50%,0)}
     @media(max-width:950px){.toolbar{align-items:flex-start}.tools{width:100%}.search{flex:1;width:auto}.table-meta{padding-left:18px;padding-right:18px}}@media(max-width:650px){.header-inner,.container{width:calc(100% - 24px)}.header-inner{height:59px}.header-subtitle{font-size:10px}.container{margin:30px auto 45px}.title-section{align-items:flex-start;flex-direction:column;gap:13px}.title-section h1{font-size:30px}.toolbar{padding:15px 12px}.filters{gap:3px}.filter{padding:8px 10px;font-size:12px}.tools{gap:6px}.search{flex-basis:100%;max-width:none}.btn{flex:1}.table-meta{padding:7px 14px 12px}.pagination{padding:13px 14px;flex-wrap:wrap}.bottom{flex-direction:column;align-items:flex-start}.panel{border-radius:14px}}
+    /* Compact top status bar; table starts immediately underneath. */
+    .header-inner{height:auto;min-height:70px;flex-wrap:wrap;justify-content:flex-start}
+    .header-summary{display:flex;align-items:baseline;gap:12px;flex:1;min-width:0}
+    .header-summary h1{font-size:18px;line-height:1.25;margin:0;white-space:nowrap;letter-spacing:-.025em}
+    .header-subtitle{font-size:12px;white-space:nowrap}
+    .header-inner .auto-badge{margin-left:auto;font-size:11px;padding:7px 10px}
+    .container{margin:22px auto 55px}
+    .latency-ms{display:inline-block;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-weight:750;color:#11936e;white-space:nowrap;font-variant-numeric:tabular-nums}
+    .latency-empty{color:var(--muted);font-weight:450}
+    table{min-width:880px}
+    th:nth-child(4){width:100px}
+    th:nth-child(7){width:103px}
+    th:nth-child(8){width:72px}
+    @media(max-width:800px){
+      .header-inner{padding-top:11px;padding-bottom:11px;gap:7px 12px}
+      .header-summary{flex:1 1 calc(100% - 155px);flex-wrap:wrap;gap:3px 10px}
+      .header-inner .auto-badge{margin-left:44px;font-size:10px}
+      .header-subtitle{font-size:11px}
+      .container{margin-top:16px}
+    }
+    @media(max-width:480px){
+      .header-summary{flex-basis:calc(100% - 145px)}
+      .header-summary h1{font-size:16px}
+      .header-inner .auto-badge{margin-left:0}
+      .header-subtitle{font-size:10px}
+    }
   </style>
 </head>
 <body>
-<header class="site-header"><div class="header-inner"><a class="brand" href="./" aria-label="Cook优选首页"><span class="brand-mark">☁</span>Cook优选</a><span class="header-subtitle">Cloudflare IP Optimizer</span></div></header>
+<header class="site-header"><div class="header-inner">
+  <a class="brand" href="./" aria-label="Cook优选首页"><span class="brand-mark">☁</span>Cook优选</a>
+  <div class="header-summary"><h1>优选 IP</h1><span class="header-subtitle">电信 · 联通 · 移动 · 当前 DNS</span></div>
+  <div class="auto-badge"><i class="live-dot" aria-hidden="true"></i><span id="updated">数据更新：读取中…</span></div>
+</div></header>
 <main class="container">
-  <section class="title-section"><div><span class="eyebrow">SMART IP SELECTION</span><h1>优选 IP</h1><p>电信 · 联通 · 移动 · 当前 DNS&nbsp;&nbsp; 一张表，清晰查看。</p></div><span class="auto-badge"><i class="live-dot" aria-hidden="true"></i><span id="updated">正在加载最新数据</span></span></section>
   <section class="panel" aria-label="Cloudflare 优选 IP 表格">
     <div class="toolbar">
       <div class="filters" role="group" aria-label="线路筛选">
@@ -78,10 +107,10 @@ INDEX_HTML = r"""<!doctype html>
       <div class="tools"><label class="search" aria-label="搜索 IP、来源或标签"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="搜索 IP / 来源" autocomplete="off"></label><button type="button" class="btn" id="refresh">↻ 刷新</button><button type="button" class="btn" id="copy-all">复制 IP</button><button type="button" class="btn" id="export-txt">TXT</button><button type="button" class="btn btn-main" id="export-json">JSON</button></div>
     </div>
     <div class="table-meta"><span id="summary" role="status">正在拉取优选数据…</span><span id="dns-status" class="meta-hint">DNS 只读查询，不修改后台记录</span></div>
-    <div class="table-wrap"><table><thead><tr><th>#</th><th>优选 IP</th><th>线路</th><th>来源</th><th>标签</th><th>状态</th><th>操作</th></tr></thead><tbody id="rows"><tr><td colspan="7" class="empty">正在加载…</td></tr></tbody></table></div>
+    <div class="table-wrap"><table><thead><tr><th>#</th><th>优选 IP</th><th>线路</th><th title="第三方来源标注的延迟，非实时测速">延迟 ⓘ</th><th>来源</th><th>标签</th><th>状态</th><th>操作</th></tr></thead><tbody id="rows"><tr><td colspan="8" class="empty">正在加载…</td></tr></tbody></table></div>
     <div class="pagination"><span id="page-summary">每页 30 条</span><div class="pages"><button class="page-btn" id="prev-page" type="button" disabled>上一页</button><span id="page-number">1 / 1</span><button class="page-btn" id="next-page" type="button" disabled>下一页</button></div></div>
   </section>
-  <footer class="bottom"><span>IP 来自公开优选数据，实际访问效果因运营商和地区而异。</span><span>自动更新 · 当前 DNS 仅供查询 · <a href="https://github.com/kityyJ/cook-speed-dns" target="_blank" rel="noopener noreferrer">GitHub ↗</a></span></footer>
+  <footer class="bottom"><span>IP 来自公开优选数据，实际访问效果因运营商和地区而异。</span><span>自动更新 · 来源延迟仅供参考，非实时测速 · 当前 DNS 仅供查询 · <a href="https://github.com/kityyJ/cook-speed-dns" target="_blank" rel="noopener noreferrer">GitHub ↗</a></span></footer>
 </main><div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script>
 (()=>{
@@ -97,7 +126,14 @@ INDEX_HTML = r"""<!doctype html>
   async function getJson(url,ms=9000){const c=sleepAbort(ms);try{const r=await fetch(url,{cache:"no-store",signal:c.signal});if(!r.ok)throw Error("HTTP "+r.status);return await r.json()}finally{c.clear()}}
   let toastTimer;
   function toast(text){const x=$("#toast");x.textContent=text;x.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>x.classList.remove("show"),2100)}
-  function safeGroupRows(payload,g){return Array.isArray(payload?.items)?payload.items.filter(x=>x&&ipv4(x.ip)).map((x,i)=>({ip:x.ip,port:Number(x.port)||443,group:g,rank:i,source:String(x.source??""),tag:String(x.tag??"")})):[]}
+  // Show upstream-reported milliseconds; not an on-demand network ping.
+  function reportedLatency(tag){
+    const found=String(tag??"").match(/\b(\d+(?:\.\d+)?)\s*ms\b/i);
+    if(!found)return null;
+    const ms=Number(found[1]);
+    return Number.isFinite(ms)&&ms>0&&ms<3000?ms:null;
+  }
+  function safeGroupRows(payload,g){return Array.isArray(payload?.items)?payload.items.filter(x=>x&&ipv4(x.ip)).map((x,i)=>({ip:x.ip,port:Number(x.port)||443,group:g,rank:i,source:String(x.source??""),tag:String(x.tag??""),latencyMs:reportedLatency(x.tag)})):[]}
   async function queryDNS(){
     const urls=["https://cloudflare-dns.com/dns-query?name=cdn.yigeyao.com&type=A","https://dns.google/resolve?name=cdn.yigeyao.com&type=A"];
     for(const url of urls){try{const c=sleepAbort(5500);try{const r=await fetch(url,{cache:"no-store",headers:url.includes("cloudflare-dns")?{"Accept":"application/dns-json"}:{},signal:c.signal});if(!r.ok)continue;const j=await r.json();if(j.Status!==0)continue;const ips=(j.Answer||[]).filter(x=>x.type===1&&ipv4(x.data)).map(x=>x.data);if(ips.length)return {ips:[...new Set(ips)],resolver:url.includes("cloudflare-dns")?"Cloudflare DoH":"Google DoH"}}finally{c.clear()}}catch(e){/* Resolver may be blocked; use fallback. */}}
@@ -117,10 +153,11 @@ INDEX_HTML = r"""<!doctype html>
     const insert=(item)=>{
       if(!ipv4(item.ip))return;
       const k=item.ip;let row=m.get(k);
-      if(!row){row={ip:k,port:item.port||443,lines:new Set(),source:item.source||"—",tag:item.tag||"—",order:order++};m.set(k,row)}
+      if(!row){row={ip:k,port:item.port||443,lines:new Set(),source:item.source||"—",tag:item.tag||"—",latencyMs:item.latencyMs??null,order:order++};m.set(k,row)}
       if(G.includes(item.group))row.lines.add(item.group);
       if(row.source==="—"&&item.source)row.source=item.source;
       if(row.tag==="—"&&item.tag)row.tag=item.tag;
+      if(row.latencyMs===null&&item.latencyMs!=null)row.latencyMs=item.latencyMs;
     };
     for(const g of G)for(const item of newRows[g])insert(item);
     if(available===0)for(const item of fallback)insert(item);
@@ -150,8 +187,11 @@ INDEX_HTML = r"""<!doctype html>
       const labels=[...row.lines].sort((a,b)=>G.indexOf(a)-G.indexOf(b));
       const lines=labels.length?labels.map(g=>`<span class="line-pill line-${g}">${N[g]}</span>`).join(""):'<span class="line-pill line-none">通用</span>';
       const online=dnsIps.has(row.ip);
-      return `<tr><td>${start+i+1}</td><td><span class="ip">${esc(row.ip)}</span></td><td><div class="tags">${lines}</div></td><td><span class="source" title="${esc(row.source)}">${esc(row.source)}</span></td><td><span class="tag" title="${esc(row.tag)}">${esc(row.tag)}</span></td><td><span class="state ${online?"live":""}">${online?"当前解析":"候选"}</span></td><td><button class="copy" type="button" data-ip="${esc(row.ip)}" aria-label="复制 ${esc(row.ip)}">复制</button></td></tr>`;
-    }).join("")||`<tr><td colspan="7" class="empty">${loaded?"没有符合条件的 IP":"正在载入数据…"}</td></tr>`;
+      const latency=row.latencyMs===null
+        ?'<span class="latency-empty" title="数据源未提供延迟">—</span>'
+        :'<span class="latency-ms" title="数据源标注延迟，并非实时测速">'+esc(String(row.latencyMs))+' ms</span>';
+      return `<tr><td>${start+i+1}</td><td><span class="ip">${esc(row.ip)}</span></td><td><div class="tags">${lines}</div></td><td>${latency}</td><td><span class="source" title="${esc(row.source)}">${esc(row.source)}</span></td><td><span class="tag" title="${esc(row.tag)}">${esc(row.tag)}</span></td><td><span class="state ${online?"live":""}">${online?"当前解析":"候选"}</span></td><td><button class="copy" type="button" data-ip="${esc(row.ip)}" aria-label="复制 ${esc(row.ip)}">复制</button></td></tr>`;
+    }).join("")||`<tr><td colspan="8" class="empty">${loaded?"没有符合条件的 IP":"正在载入数据…"}</td></tr>`;
     $("#summary").innerHTML=`共 <strong>${rows.length}</strong> 条${query?" · 搜索结果":""}${rows.length?` · 显示 ${start+1}–${Math.min(start+PAGE_SIZE,rows.length)}`:""}`;
     $("#page-summary").textContent=`每页 ${PAGE_SIZE} 条`;
     $("#page-number").textContent=page+" / "+totalPages;

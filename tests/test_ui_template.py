@@ -26,6 +26,16 @@ class FrontendTemplateTest(unittest.TestCase):
         ):
             self.assertIn(value, html)
 
+    def test_latency_column_and_compact_header(self):
+        html = (ROOT / "index.html").read_text(encoding="utf-8")
+        self.assertIn('class="header-summary"', html)
+        self.assertIn('id="updated"', html)
+        self.assertNotIn('<section class="title-section">', html)
+        self.assertIn('来源延迟仅供参考，非实时测速', html)
+        self.assertIn('reportedLatency(tag)', html)
+        self.assertIn('colspan="8"', html)
+        self.assertIn('延迟 ⓘ', html)
+
     def test_page_is_display_only_change(self):
         html = (ROOT / "index.html").read_text(encoding="utf-8")
         self.assertIn("DNS 只读查询，不修改后台记录", html)
