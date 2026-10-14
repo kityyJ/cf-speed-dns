@@ -52,18 +52,25 @@ class FrontendTemplateTest(unittest.TestCase):
         self.assertNotIn("myip.ipip.net", html)
 
 
-    def test_adaptive_pagination_and_mobile_cards(self):
+    def test_fixed_ten_item_pagination_and_mobile_cards(self):
         html = (ROOT / "index.html").read_text(encoding="utf-8")
-        self.assertIn("function calculatePageSize()", html)
-        self.assertIn('window.addEventListener("resize",scheduleResponsiveRender', html)
-        self.assertIn('window.visualViewport.addEventListener("resize",scheduleResponsiveRender', html)
+        self.assertIn("const pageSize=10;", html)
+        self.assertIn("每页最多 ${pageSize} 条", html)
+        self.assertIn("Math.ceil(rows.length/pageSize)", html)
+        self.assertIn("Math.min(start+pageSize,rows.length)", html)
+        self.assertIn("function filtered()", html)
+        self.assertIn("function download(type){const rows=filtered()", html)
+        self.assertIn('id="export-json"', html)
+        self.assertIn('id="prev-page"', html)
+        self.assertIn('id="next-page"', html)
+        self.assertIn("morphicons@1.7.1/dom", html)
+        self.assertIn("createMorph(path, icon.from)", html)
+        self.assertIn("morph.morphTo(active ? icon.to : icon.from", html)
+        self.assertNotIn("calculatePageSize", html)
         self.assertIn("grid-template-areas:", html)
         self.assertIn("@media(max-width:920px)", html)
-        self.assertIn('pageSize=capacity', html)
-        self.assertIn('Math.ceil(rows.length/pageSize)', html)
-        self.assertIn('Math.min(start+pageSize,rows.length)', html)
-        self.assertNotIn("const PAGE_SIZE=30", html)
-        self.assertIn('id="export-json"', html)
+        self.assertIn("@media(min-width:680px) and (max-width:920px)", html)
+        self.assertIn("@media(max-width:650px)", html)
 
 if __name__ == "__main__":
     unittest.main()
