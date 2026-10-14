@@ -3,6 +3,7 @@ name: dns_cf_push
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
+# Manual refresh trigger: reselect IP pool on 2026-10-14
 on:
   schedule:
     - cron: "12,42 * * * *"
