@@ -67,6 +67,8 @@ class FrontendTemplateTest(unittest.TestCase):
         self.assertIn('aria-label="下一页"', html)
         self.assertNotIn('<span>上一页</span>', html)
         self.assertNotIn('<span>下一页</span>', html)
+        self.assertNotIn('title="上一页"', html)
+        self.assertNotIn('title="下一页"', html)
         self.assertIn("morphicons@1.7.1/dom", html)
         self.assertIn("createMorph(path, icon.from)", html)
         self.assertIn("morph.morphTo(active ? icon.to : icon.from", html)
