@@ -1,0 +1,24 @@
+name: Test router standalone scanner
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "router/**"
+      - "tests/router_smoke.sh"
+      - ".github/workflows/test_router.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: POSIX shell syntax
+        run: sh -n router/asuswrt-unicom.sh
+      - name: Offline HTTPS measurements smoke test
+        run: sh tests/router_smoke.sh
