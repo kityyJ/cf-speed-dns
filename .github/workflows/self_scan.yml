@@ -1,0 +1,53 @@
+name: Independent Cloudflare IP scan
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "23 3 * * *"
+  push:
+    branches: ["main"]
+    paths:
+      - "self_scan.py"
+      - "tests/test_self_scan.py"
+      - ".github/workflows/self_scan.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: independent-ip-scan
+  cancel-in-progress: false
+
+jobs:
+  self-scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Unit tests
+        run: python -m unittest discover -s tests -p "test_self_scan.py" -v
+      - name: Independently probe official Cloudflare IPv4 (GitHub location only)
+        run: |
+          python self_scan.py \
+            --hosts "cook.jia.nz,www.jia.nz" \
+            --label "github-hosted" \
+            --per-prefix 12 \
+            --workers 12 \
+            --timeout 3.5 \
+            --limit 30
+      - name: Publish own scan results (no DNS changes)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/self_scan_github.json api/self_scan.json api/self_scan.txt
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Refresh independent Cloudflare IP scan"
+          git pull --rebase origin main
+          git push origin main
