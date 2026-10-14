@@ -22,8 +22,7 @@ class FrontendTemplateTest(unittest.TestCase):
             'id="copy-all"', 'id="export-txt"', 'id="export-json"',
             'data-filter="all"', 'data-filter="dns"', 'data-filter="ct"',
             'data-filter="cu"', 'data-filter="cmcc"',
-            "./api/ct.json", "./api/cu.json", "./api/cmcc.json", "./api/all.json",
-            "./data/status.json"
+            "./api/${g}.json", "./api/all.json", "./data/status.json"
         ):
             self.assertIn(value, html)
 
