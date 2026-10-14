@@ -44,12 +44,14 @@ INDEX_HTML = r"""<!doctype html>
   <meta name="color-scheme" content="light dark">
   <meta name="description" content="Cloudflare IPv4 优选数据：电信、联通、移动与目前使用的 DNS 解析。">
   <title>Cook 优选 · Cloudflare IP</title>
+  <link type="image/png" sizes="16x16" rel="icon" href="https://img.icons8.com/pulsar-color/16/cloud-development.png">
+  <link type="image/png" sizes="32x32" rel="icon" href="https://img.icons8.com/pulsar-color/32/cloud-development.png">
   <style>
     :root{font-family:Inter,-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;color-scheme:light;--bg:#f7f8fa;--panel:#fff;--ink:#1a2533;--muted:#788495;--border:#e7ebf1;--accent:#f47b2b;--accent-bg:#fff4eb;--green:#15966e;--green-bg:#e8f8ef;--shadow:0 8px 30px rgba(25,42,64,.045)}
     @media(prefers-color-scheme:dark){:root{color-scheme:dark;--bg:#0f141c;--panel:#1a222d;--ink:#eef2f7;--muted:#9aa6b4;--border:#303b4a;--accent:#ff9958;--accent-bg:#392b24;--green:#53d6a6;--green-bg:#1a382e;--shadow:0 8px 30px rgba(0,0,0,.18)}}
     *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-size:14px;min-width:320px}button,input,a{font:inherit}button{cursor:pointer}a{color:inherit;text-decoration:none}
     .site-header{background:var(--panel);border-bottom:1px solid var(--border)}.header-inner{width:min(1080px,calc(100% - 36px));margin:auto;height:67px;display:flex;align-items:center;justify-content:space-between;gap:16px}
-    .brand{display:inline-flex;align-items:center;gap:10px;white-space:nowrap;font-size:17px;font-weight:800;letter-spacing:-.02em}.brand-mark{display:grid;place-items:center;width:34px;height:34px;border-radius:11px;color:#fff;background:linear-gradient(140deg,#ffac51,#f16f1a);font-size:21px;box-shadow:0 4px 13px rgba(247,119,34,.18)}.header-subtitle{color:var(--muted);font-size:12px;font-weight:550}
+    .brand{display:inline-flex;align-items:center;gap:10px;white-space:nowrap;font-size:17px;font-weight:800;letter-spacing:-.02em}.brand-mark{display:block;width:32px;height:32px;flex:none;object-fit:contain}.header-subtitle{color:var(--muted);font-size:12px;font-weight:550}
     .container{width:min(1080px,calc(100% - 36px));margin:54px auto 70px}.title-section{margin-bottom:26px;display:flex;justify-content:space-between;align-items:flex-end;gap:16px}.eyebrow{color:var(--accent);font-size:11px;letter-spacing:.16em;font-weight:800}.title-section h1{font-size:clamp(29px,4.5vw,38px);line-height:1.2;margin:8px 0 7px;letter-spacing:-.04em}.title-section p{font-size:13px;line-height:1.75;color:var(--muted);margin:0}.auto-badge{border:1px solid var(--border);border-radius:50px;padding:8px 12px;background:var(--panel);display:inline-flex;align-items:center;gap:8px;white-space:nowrap;color:var(--muted);font-size:12px}.live-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#14b981;box-shadow:0 0 0 4px rgba(20,185,129,.09)}
     .panel{background:var(--panel);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);overflow:hidden}.toolbar{padding:22px 24px 19px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:15px;align-items:center}.filters{display:flex;flex-wrap:wrap;gap:7px}.filter{background:transparent;border:1px solid transparent;border-radius:9px;color:var(--muted);padding:9px 12px;font-weight:650;font-size:13px;display:inline-flex;align-items:center;gap:7px}.filter:hover{color:var(--ink);background:var(--bg)}.filter.active{background:var(--accent-bg);color:var(--accent);border-color:rgba(244,123,43,.21)}.filter small{font-size:11px;font-weight:600;color:inherit;opacity:.75}
     .tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.search{display:flex;align-items:center;gap:8px;min-width:190px;width:216px;border:1px solid var(--border);border-radius:9px;padding:0 12px;background:var(--panel);height:36px;color:var(--muted)}.search:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px rgba(244,123,43,.09)}.search input{color:var(--ink);background:transparent;border:0;outline:0;min-width:0;width:100%;font-size:12px}.search input::placeholder{color:var(--muted)}
@@ -152,8 +154,8 @@ INDEX_HTML = r"""<!doctype html>
 </head>
 <body>
 <header class="site-header"><div class="header-inner">
-  <a class="brand" href="./" aria-label="Cook优选首页"><span class="brand-mark">☁</span>Cook优选</a>
-  <div class="header-summary"><h1>优选 IP</h1><span class="header-subtitle">电信 · 联通 · 移动 · 目前使用</span></div>
+  <a class="brand" href="./" aria-label="Cook优选首页"><img class="brand-mark" src="https://img.icons8.com/pulsar-color/32/cloud-development.png" width="32" height="32" alt="" decoding="async">Cook优选</a>
+  <div class="header-summary"><h1>优选 IP</h1></div>
   <div class="auto-badge"><i class="live-dot" aria-hidden="true"></i><span id="updated">数据更新：读取中…</span></div>
 </div></header>
 <main class="container">
@@ -172,7 +174,7 @@ INDEX_HTML = r"""<!doctype html>
     <div class="table-wrap"><table><thead><tr><th>#</th><th>优选 IP</th><th>线路</th><th title="只有第三方来源提供 ms 时显示；不是即时测速">来源延迟 ⓘ</th><th>来源</th><th>标签</th><th>状态</th><th>操作</th></tr></thead><tbody id="rows"><tr><td colspan="8" class="empty">正在加载…</td></tr></tbody></table></div>
     <div class="pagination"><span id="page-summary">每页最多 10 条</span><div class="pages"><button class="page-btn" id="prev-page" type="button" aria-label="上一页" disabled><svg class="page-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><span id="page-number">1 / 1</span><button class="page-btn" id="next-page" type="button" aria-label="下一页" disabled><svg class="page-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></div>
   </section>
-  <footer class="bottom"><span>IP 来自公开优选数据；「来源延迟」是上游历史参考值，未提供的 IP 不代表慢或不可用。</span><span>自动更新 · 来源延迟仅供参考，非实时测速 · 目前使用的 DNS 仅供查询 · <a href="https://github.com/kityyJ/cook-speed-dns" target="_blank" rel="noopener noreferrer">GitHub ↗</a></span></footer>
+  <footer class="bottom"><span>IP 来自公开优选数据；「来源延迟」是上游历史参考值，未提供的 IP 不代表慢或不可用。</span><span>自动更新 · 来源延迟仅供参考，非实时测速 · 目前使用的 DNS 仅供查询 · 图标：<a href="https://icons8.com/icon/oazEPoSbwSAm/cloud-development" target="_blank" rel="noopener noreferrer">Cloud Development</a> by <a href="https://icons8.com" target="_blank" rel="noopener noreferrer">Icons8</a> · <a href="https://github.com/kityyJ/cook-speed-dns" target="_blank" rel="noopener noreferrer">GitHub ↗</a></span></footer>
 </main><div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script>
 (()=>{
