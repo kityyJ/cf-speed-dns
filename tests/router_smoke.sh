@@ -38,7 +38,12 @@ sed "s|^PATH=/usr/sbin:/usr/bin:/sbin:/bin$|PATH=$tempdir/bin:/usr/sbin:/usr/bin
   "$repo_root/router/asuswrt-unicom.sh" > "$tempdir/scan.sh"
 sh -n "$tempdir/scan.sh"
 HOST_A=alpha.example.com HOST_B=beta.example.com PER_PREFIX=2 \
- LIMIT=5 MIN_PASS=2 OUT_DIR="$tempdir/output" sh "$tempdir/scan.sh"
+ MAX_CANDIDATES=12 LIMIT=5 MIN_PASS=2 OUT_DIR="$tempdir/output" sh "$tempdir/scan.sh" > "$tempdir/scan.log"
+grep -q '\[1/12\]' "$tempdir/scan.log"
+grep -q 'PASS (total' "$tempdir/scan.log"
+grep -q 'Fetching Cloudflare official' "$tempdir/scan.log"
+grep -q 'Ranking by measured HTTPS TOTAL time' "$tempdir/scan.log"
+cat "$tempdir/scan.log"
 
 python3 - "$tempdir/output/self_scan_cu.json" "$tempdir/output/self_scan_cu.txt" <<'PY'
 import ipaddress
@@ -49,7 +54,7 @@ data = json.loads(Path(sys.argv[1]).read_text())
 ips = Path(sys.argv[2]).read_text().strip().splitlines()
 assert len(ips) == 5
 assert data["count"] == len(ips)
-assert data["passed"] == 20 and data["tested"] == 20
+assert data["passed"] == 12 and data["tested"] == 12
 assert data["carrier"] == "cu" and data["carrier_verified"] is False
 assert [item["ip"] for item in data["items"]] == ips
 assert all(item["ttfb_ms"] == 303 for item in data["items"])
