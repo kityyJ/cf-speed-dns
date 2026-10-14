@@ -41,7 +41,7 @@ INDEX_HTML = r"""<!doctype html>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="color-scheme" content="light dark">
-  <meta name="description" content="Cloudflare IPv4 优选数据：电信、联通、移动与当前 DNS 解析。">
+  <meta name="description" content="Cloudflare IPv4 优选数据：电信、联通、移动与目前使用的 DNS 解析。">
   <title>Cook 优选 · Cloudflare IP</title>
   <style>
     :root{font-family:Inter,-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;color-scheme:light;--bg:#f7f8fa;--panel:#fff;--ink:#1a2533;--muted:#788495;--border:#e7ebf1;--accent:#f47b2b;--accent-bg:#fff4eb;--green:#15966e;--green-bg:#e8f8ef;--shadow:0 8px 30px rgba(25,42,64,.045)}
@@ -57,7 +57,7 @@ INDEX_HTML = r"""<!doctype html>
     .table-wrap{overflow-x:auto;scrollbar-width:thin;border-top:1px solid var(--border)}table{border-collapse:collapse;width:100%;min-width:810px;text-align:center}thead{background:var(--bg)}th{color:var(--muted);font-size:11px;font-weight:750;letter-spacing:.025em;text-align:center;padding:14px 12px;white-space:nowrap}td{border-top:1px solid var(--border);font-size:12px;padding:14px 12px;vertical-align:middle}tbody tr:hover{background:color-mix(in srgb,var(--bg) 58%,transparent)}th:first-child,td:first-child{width:58px;color:var(--muted)}th:nth-child(2){width:178px}th:nth-child(3){width:155px}th:nth-child(6){width:103px}th:nth-child(7){width:72px}
     .ip{font-family:ui-monospace,"SFMono-Regular",Consolas,"Liberation Mono",monospace;font-size:13px;font-weight:740;white-space:nowrap;letter-spacing:-.015em}.tag{color:var(--muted);display:inline-block;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle}.source{color:var(--ink);max-width:190px;display:inline-block;overflow:hidden;white-space:nowrap;vertical-align:middle}.tags{display:flex;justify-content:center;align-items:center;gap:5px;flex-wrap:wrap}.line-pill{display:inline-flex;align-items:center;justify-content:center;padding:4px 8px;border-radius:6px;background:var(--bg);border:1px solid var(--border);font-weight:650;font-size:11px;color:var(--muted)}.line-ct{color:#3684d5}.line-cu{color:#935fc8}.line-cmcc{color:#159b78}.line-none{color:var(--muted)}
     .state{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);white-space:nowrap}.state:before{content:"";width:6px;height:6px;border-radius:50%;background:#bac3d0}.state.live{color:var(--green);font-weight:750}.state.live:before{background:var(--green)}.copy{border:0;background:transparent;color:var(--accent);font-size:12px;font-weight:750;padding:7px 5px}.copy:hover{text-decoration:underline}
-    .empty{padding:60px 16px!important;color:var(--muted);font-size:13px}.pagination{border-top:1px solid var(--border);padding:15px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:12px;color:var(--muted)}.pages{display:flex;align-items:center;gap:10px}.page-btn{background:var(--panel);color:var(--ink);border:1px solid var(--border);padding:7px 12px;border-radius:8px;font-size:12px}.page-btn:disabled{opacity:.35;cursor:not-allowed}.page-btn:not(:disabled):hover{border-color:var(--accent);color:var(--accent)}
+    .empty{padding:60px 16px!important;color:var(--muted);font-size:13px}.pagination{border-top:1px solid var(--border);padding:15px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:12px;color:var(--muted)}.pages{display:flex;align-items:center;gap:10px}.page-btn{background:var(--panel);color:var(--ink);border:1px solid var(--border);padding:7px 12px;border-radius:8px;font-size:12px}.page-btn:disabled{opacity:.35;cursor:not-allowed}.page-btn:not(:disabled):hover{border-color:var(--accent);color:var(--accent)}.page-icon{display:block;width:16px;height:16px;flex:none;transition:transform .18s ease}.page-btn:not(:disabled):hover .page-icon,.page-btn:not(:disabled):focus-visible .page-icon{transform:translateX(var(--page-icon-shift))}#prev-page{--page-icon-shift:-2px}#next-page{--page-icon-shift:2px}@media(prefers-reduced-motion:reduce){.page-icon{transition:none}}
     .bottom{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:16px 4px 0;color:var(--muted);font-size:11px;line-height:1.6}.bottom a:hover{color:var(--accent)}.toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,10px);opacity:0;pointer-events:none;background:var(--ink);color:var(--panel);border-radius:10px;padding:11px 18px;box-shadow:var(--shadow);font-size:12px;transition:opacity .2s,transform .2s}.toast.show{opacity:1;transform:translate(-50%,0)}
     @media(max-width:950px){.toolbar{align-items:flex-start}.tools{width:100%}.search{flex:1;width:auto}.table-meta{padding-left:18px;padding-right:18px}}@media(max-width:650px){.header-inner,.container{width:calc(100% - 24px)}.header-inner{height:59px}.header-subtitle{font-size:10px}.container{margin:30px auto 45px}.title-section{align-items:flex-start;flex-direction:column;gap:13px}.title-section h1{font-size:30px}.toolbar{padding:15px 12px}.filters{gap:3px}.filter{padding:8px 10px;font-size:12px}.tools{gap:6px}.search{flex-basis:100%;max-width:none}.btn{flex:1}.table-meta{padding:7px 14px 12px}.pagination{padding:13px 14px;flex-wrap:wrap}.bottom{flex-direction:column;align-items:flex-start}.panel{border-radius:14px}}
     /* Compact top status bar; table starts immediately underneath. */
@@ -152,7 +152,7 @@ INDEX_HTML = r"""<!doctype html>
 <body>
 <header class="site-header"><div class="header-inner">
   <a class="brand" href="./" aria-label="Cook优选首页"><span class="brand-mark">☁</span>Cook优选</a>
-  <div class="header-summary"><h1>优选 IP</h1><span class="header-subtitle">电信 · 联通 · 移动 · 当前 DNS</span></div>
+  <div class="header-summary"><h1>优选 IP</h1><span class="header-subtitle">电信 · 联通 · 移动 · 目前使用</span></div>
   <div class="auto-badge"><i class="live-dot" aria-hidden="true"></i><span id="updated">数据更新：读取中…</span></div>
 </div></header>
 <main class="container">
@@ -160,7 +160,7 @@ INDEX_HTML = r"""<!doctype html>
     <div class="toolbar">
       <div class="filters" role="group" aria-label="线路筛选">
         <button class="filter active" data-filter="all" aria-pressed="true">全部 <small id="count-all">—</small></button>
-        <button class="filter" data-filter="dns" aria-pressed="false">当前 DNS <small id="count-dns">—</small></button>
+        <button class="filter" data-filter="dns" aria-pressed="false">目前使用 <small id="count-dns">—</small></button>
         <button class="filter" data-filter="ct" aria-pressed="false">电信 <small id="count-ct">—</small></button>
         <button class="filter" data-filter="cu" aria-pressed="false">联通 <small id="count-cu">—</small></button>
         <button class="filter" data-filter="cmcc" aria-pressed="false">移动 <small id="count-cmcc">—</small></button>
@@ -169,15 +169,15 @@ INDEX_HTML = r"""<!doctype html>
     </div>
     <div class="table-meta"><span id="summary" role="status">正在拉取优选数据…</span><span id="dns-status" class="meta-hint">DNS 只读查询，不修改后台记录</span></div>
     <div class="table-wrap"><table><thead><tr><th>#</th><th>优选 IP</th><th>线路</th><th title="只有第三方来源提供 ms 时显示；不是即时测速">来源延迟 ⓘ</th><th>来源</th><th>标签</th><th>状态</th><th>操作</th></tr></thead><tbody id="rows"><tr><td colspan="8" class="empty">正在加载…</td></tr></tbody></table></div>
-    <div class="pagination"><span id="page-summary">自动适配 · 计算中…</span><div class="pages"><button class="page-btn" id="prev-page" type="button" disabled>上一页</button><span id="page-number">1 / 1</span><button class="page-btn" id="next-page" type="button" disabled>下一页</button></div></div>
+    <div class="pagination"><span id="page-summary">每页最多 10 条</span><div class="pages"><button class="page-btn" id="prev-page" type="button" aria-label="上一页" disabled><svg class="page-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>上一页</span></button><span id="page-number">1 / 1</span><button class="page-btn" id="next-page" type="button" aria-label="下一页" disabled><span>下一页</span><svg class="page-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></div>
   </section>
-  <footer class="bottom"><span>IP 来自公开优选数据；「来源延迟」是上游历史参考值，未提供的 IP 不代表慢或不可用。</span><span>自动更新 · 来源延迟仅供参考，非实时测速 · 当前 DNS 仅供查询 · <a href="https://github.com/kityyJ/cook-speed-dns" target="_blank" rel="noopener noreferrer">GitHub ↗</a></span></footer>
+  <footer class="bottom"><span>IP 来自公开优选数据；「来源延迟」是上游历史参考值，未提供的 IP 不代表慢或不可用。</span><span>自动更新 · 来源延迟仅供参考，非实时测速 · 目前使用的 DNS 仅供查询 · <a href="https://github.com/kityyJ/cook-speed-dns" target="_blank" rel="noopener noreferrer">GitHub ↗</a></span></footer>
 </main><div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script>
 (()=>{
   "use strict";
   const G=["ct","cu","cmcc"],N={ct:"电信",cu:"联通",cmcc:"移动"};
-  let pageSize=12;
+  const pageSize=10;
   let filter="all",query="",page=1,data=[],dnsIps=new Set(),sources={},loaded=false,loading=false,metaTimestamp="";
   const $=s=>document.querySelector(s);
   const esc=x=>String(x??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -242,24 +242,8 @@ INDEX_HTML = r"""<!doctype html>
     if(query){const hay=[row.ip,row.source,row.tag,[...row.lines].map(g=>N[g]).join(" "),dnsIps.has(row.ip)?"解析中":"候选"].join(" ").toLowerCase();if(!hay.includes(query))return false}
     return true;
   })}
-  // Keep all records accessible while fitting each page to the screen's free height.
-  function calculatePageSize(){
-    const viewport=Math.min(window.innerHeight,window.visualViewport?.height||window.innerHeight);
-    const free=viewport-$(".table-wrap").getBoundingClientRect().top-$(".pagination").offsetHeight-$(".bottom").offsetHeight-22;
-    if(window.matchMedia("(max-width:920px)").matches){
-      const columns=window.matchMedia("(min-width:680px)").matches?2:1;
-      const rowsPerColumn=Math.max(1,Math.floor((free-24+10)/168));
-      return Math.min(30,columns*rowsPerColumn);
-    }
-    return Math.max(2,Math.min(30,Math.floor((free-40)/43)));
-  }
+  // Keep page size fixed so every device uses the same paging rules.
   function render(){
-    const capacity=calculatePageSize();
-    if(capacity!==pageSize){
-      const firstVisible=(page-1)*pageSize;
-      pageSize=capacity;
-      page=Math.floor(firstVisible/pageSize)+1;
-    }
     const rows=filtered();const totalPages=Math.max(1,Math.ceil(rows.length/pageSize));page=Math.max(1,Math.min(page,totalPages));
     const start=(page-1)*pageSize;
     const table=rows.slice(start,start+pageSize);
@@ -275,7 +259,7 @@ INDEX_HTML = r"""<!doctype html>
     const measured=rows.reduce((total,row)=>total+(row.latencyMs!==null?1:0),0);
     $("#summary").innerHTML=`共 <strong>${rows.length}</strong> 条 · <strong>${measured}</strong> 条有来源延迟${query?" · 搜索结果":""}${rows.length?` · 显示 ${start+1}–${Math.min(start+pageSize,rows.length)}`:""}`;
     $("#summary").title="未显示延迟的 IP 是上游未提供数据；网页没有对单个 IP 进行实时网络测速。";
-    $("#page-summary").textContent=`自动适配 · 每页 ${pageSize} 条`;
+    $("#page-summary").textContent=`每页最多 ${pageSize} 条`;
     $("#page-number").textContent=page+" / "+totalPages;
     $("#prev-page").disabled=page<=1;$("#next-page").disabled=page>=totalPages;
   }
@@ -288,16 +272,31 @@ INDEX_HTML = r"""<!doctype html>
   $("#refresh").addEventListener("click",reload);
   $("#copy-all").addEventListener("click",()=>{const r=filtered();if(!r.length)return toast("当前没有可复制的 IP");copy(r.map(x=>x.ip).join("\n"))});
   $("#export-txt").addEventListener("click",()=>download("txt"));$("#export-json").addEventListener("click",()=>download("json"));
-  let resizeFrame=0;
-  function scheduleResponsiveRender(){
-    if(resizeFrame)cancelAnimationFrame(resizeFrame);
-    resizeFrame=requestAnimationFrame(()=>{resizeFrame=0;render()});
-  }
-  window.addEventListener("resize",scheduleResponsiveRender,{passive:true});
-  if(window.visualViewport)window.visualViewport.addEventListener("resize",scheduleResponsiveRender,{passive:true});
-  if(document.fonts?.ready)document.fonts.ready.then(scheduleResponsiveRender);
   reload();
 })();
+</script>
+<script type="module">
+  try {
+    const { createMorph } = await import("https://esm.sh/morphicons@1.7.1/dom");
+    const icons = [
+      { id: "prev-page", from: "M15 18l-6-6 6-6", to: "M19 12H5M12 19l-7-7 7-7" },
+      { id: "next-page", from: "M9 18l6-6-6-6", to: "M5 12h14M12 5l7 7-7 7" }
+    ];
+    for (const icon of icons) {
+      const button = document.getElementById(icon.id);
+      const path = button?.querySelector(".page-icon path");
+      if (!button || !path) continue;
+      const morph = createMorph(path, icon.from);
+      morph.reducedMotion = "user";
+      const setState = active => morph.morphTo(active ? icon.to : icon.from, "snappy");
+      button.addEventListener("mouseenter", () => setState(true));
+      button.addEventListener("mouseleave", () => setState(false));
+      button.addEventListener("focus", () => setState(true));
+      button.addEventListener("blur", () => setState(false));
+    }
+  } catch {
+    // Inline SVG and CSS keep the arrows visible and pagination usable if the CDN is unavailable.
+  }
 </script>
 </body></html>
 """
