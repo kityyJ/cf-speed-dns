@@ -1,16 +1,16 @@
 {
-  "generated_at": "2026-10-14 06:38:41 UTC",
+  "generated_at": "2026-10-14 10:18:53 UTC",
   "cloudflare_range_source": "live",
   "cloudflare_only": true,
   "counts": {
-    "ct": 51,
+    "ct": 55,
     "cu": 120,
-    "cmcc": 51,
-    "all": 199
+    "cmcc": 56,
+    "all": 226
   },
-  "healthy_sources": 20,
-  "failed_sources": 0,
-  "filtered_slow": 75,
+  "healthy_sources": 19,
+  "failed_sources": 1,
+  "filtered_slow": 58,
   "sources": [
     {
       "group": "ct",
@@ -80,9 +80,9 @@
       "group_title": "全部优选",
       "name": "CM CloudFlareYes",
       "url": "https://addressesapi.090227.xyz/CloudFlareYes",
-      "ok": true,
-      "count": 15,
-      "error": ""
+      "ok": false,
+      "count": 0,
+      "error": "500 Server Error: Internal Server Error for url: https://addressesapi.090227.xyz/CloudFlareYes"
     },
     {
       "group": "all",
