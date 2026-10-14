@@ -36,6 +36,15 @@ class FrontendTemplateTest(unittest.TestCase):
         self.assertIn('colspan="8"', html)
         self.assertIn('延迟 ⓘ', html)
 
+    def test_latency_first_sort_and_missing_data_disclosure(self):
+        html = (ROOT / "index.html").read_text(encoding="utf-8")
+        self.assertIn('来源延迟 ⓘ', html)
+        self.assertIn('latencyMs!==null', html)
+        self.assertIn('有来源延迟', html)
+        self.assertIn('上游没有提供延迟', html)
+        self.assertIn('latency_ms:r.latencyMs', html)
+        self.assertIn('data-filter="dns"', html)
+
     def test_page_is_display_only_change(self):
         html = (ROOT / "index.html").read_text(encoding="utf-8")
         self.assertIn("DNS 只读查询，不修改后台记录", html)
