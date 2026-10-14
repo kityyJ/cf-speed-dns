@@ -142,7 +142,41 @@ class DNSTests(unittest.TestCase):
 
     def test_dns_rotation_rejects_invalid_limit(self):
         with self.assertRaises(DnsSyncError):
-            limit_rotation([], ["104.17.1.1"], max_changes=31)
+            limit_rotation([], ["104.17.1.1"], max_changes=101)
+
+    def test_strict_rtt_pool_excludes_unmeasured_and_over_limit(self):
+        pools = {
+            "ct": [
+                {"ip": "104.17.1.1", "port": 443, "tag": "49ms | 0.1mb/s"},
+                {"ip": "104.17.1.2", "port": 443, "tag": "HKG"},
+            ],
+            "cu": [
+                {"ip": "104.17.1.3", "port": 443, "tag": "80ms | 0.1mb/s"},
+                {"ip": "104.17.1.4", "port": 443, "tag": "221ms | 30mb/s"},
+            ],
+            "cmcc": [
+                {"ip": "162.159.1.2", "port": 443, "tag": "99ms | 0.1mb/s"},
+            ],
+            "all": [],
+        }
+        result = pick_ips(
+            pools, 3, NETWORKS, probe=lambda ip: True,
+            max_reported_rtt=220, require_reported_rtt=True,
+        )
+        self.assertEqual(result, ["104.17.1.1", "104.17.1.3", "162.159.1.2"])
+
+    def test_strict_rtt_pool_aborts_instead_of_using_unmeasured_fallback(self):
+        pools = {
+            "ct": [{"ip": "104.17.1.1", "port": 443, "tag": "49ms"}],
+            "cu": [{"ip": "104.17.1.2", "port": 443, "tag": "HKG"}],
+            "cmcc": [],
+            "all": [],
+        }
+        with self.assertRaises(DnsSyncError):
+            pick_ips(
+                pools, 2, NETWORKS, probe=lambda ip: True,
+                max_reported_rtt=220, require_reported_rtt=True,
+            )
 
     def test_https_audit_rejects_unsafe_host_or_path(self):
         with self.assertRaises(DnsSyncError):

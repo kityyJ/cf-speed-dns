@@ -50,8 +50,11 @@ jobs:
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CF_ZONE_ID: "5f62be379eeeaf9a9334c903c0b7f5ba" # Public zone ID, token remains in GitHub Secrets
           CF_DNS_NAME: cdn.yigeyao.com
-          CF_DNS_RECORD_COUNT: "30"
+          CF_DNS_RECORD_COUNT: "66"
           CF_DNS_MAX_ROTATIONS: "6"
+          # Quality gate: only upstream-measured low-RTT IPs may enter production DNS.
+          CF_DNS_REQUIRE_REPORTED_RTT: "1"
+          CF_DNS_MAX_RTT_MS: "220"
           # HTTPS site check is diagnostic only; Runner != mainland China probe.
           CF_DNS_SITE_AUDIT_HOST: cook.jia.nz
           CF_DNS_SITE_VERIFY_EXTRA_HOSTS: www.jia.nz

@@ -155,8 +155,8 @@ def candidate_rank(item, index):
     return (2, region, index)
 
 
-def pick_ips(pools, count, networks, probe=None):
-    """Select low-latency candidates, 1/3 per China carrier when possible."""
+def pick_ips(pools, count, networks, probe=None, max_reported_rtt=None, require_reported_rtt=False):
+    """Select candidates, optionally requiring a hard upstream-reported RTT ceiling."""
     carriers = ("ct", "cu", "cmcc")
     quota = {carrier: count // 3 + (i < count % 3)
              for i, carrier in enumerate(carriers)}
@@ -164,7 +164,17 @@ def pick_ips(pools, count, networks, probe=None):
     for group in (*carriers, "all"):
         candidates = []
         for index, item in enumerate(pools[group]):
-            rank = candidate_rank(item, index)
+            if require_reported_rtt or max_reported_rtt is not None:
+                rtt, _ = reported_metrics(item)
+                if rtt is None or rtt <= 0:
+                    continue
+                if max_reported_rtt is not None and rtt > max_reported_rtt:
+                    continue
+                # Strict latency mode deliberately ranks by RTT only. This is
+                # an upstream measurement, not a claim about every CN city.
+                rank = (0, rtt, index)
+            else:
+                rank = candidate_rank(item, index)
             if rank is not None:
                 candidates.append((rank, item))
         ordered[group] = [item for _, item in sorted(candidates, key=lambda p: p[0])]
@@ -219,7 +229,12 @@ def pick_ips(pools, count, networks, probe=None):
         raise DnsSyncError(
             f"Only {len(selected)} validated IPs for a target of {count}; DNS unchanged"
         )
-    print(f"Carrier priorities: {chosen_by_carrier}; unknown RTT stays unscored")
+    if require_reported_rtt or max_reported_rtt is not None:
+        ceiling = f" <= {max_reported_rtt:g} ms" if max_reported_rtt is not None else ""
+        print(f"Strict RTT pool: {len(selected)} selected with explicit upstream RTT{ceiling}; "
+              f"carrier contributions {chosen_by_carrier}")
+    else:
+        print(f"Carrier priorities: {chosen_by_carrier}; unknown RTT stays unscored")
     return selected
 
 
@@ -233,13 +248,13 @@ def tcp_reachable(ip, timeout=2.0):
 
 
 def limit_rotation(records, desired, max_changes=6):
-    """Keep a working 30-address pool stable; replace at most N IPs per run.
+    """Keep a working DNS address pool stable; replace at most N IPs per run.
 
     Initial provisioning, and size repairs, are allowed to complete immediately.
     This is DNS-pool stability, NOT proof that retained IPs work for all visitors.
     """
-    if not 0 <= max_changes <= 30:
-        raise DnsSyncError("CF_DNS_MAX_ROTATIONS must be between 0 and 30")
+    if not 0 <= max_changes <= 100:
+        raise DnsSyncError("CF_DNS_MAX_ROTATIONS must be between 0 and 100")
     if not records or len(records) != len(desired):
         return desired
     current = [rec["content"] for rec in records]
@@ -317,8 +332,8 @@ def compatible_with_sites(ip, hosts, path="/", checker=None):
 
 def sync_dns(session, zone_id, dns_name, token, records, desired):
     """Update, create or remove only exact-name DNS-only A records."""
-    if not records and (dns_name != "cdn.yigeyao.com" or len(desired) != 30):
-        raise DnsSyncError("Bootstrapping an empty DNS name is permitted only for 30 cdn.yigeyao.com A records")
+    if not records and (dns_name != "cdn.yigeyao.com" or not 1 <= len(desired) <= 100):
+        raise DnsSyncError("Bootstrapping an empty DNS name is permitted only for cdn.yigeyao.com with 1-100 A records")
     if not desired:
         raise DnsSyncError("No validated IPs; refusing to change DNS")
     if len(set(desired)) != len(desired):
@@ -399,8 +414,8 @@ def main():
         count = int(target) if target else len(records)
     except ValueError as exc:
         raise DnsSyncError("CF_DNS_RECORD_COUNT must be an integer") from exc
-    if not 1 <= count <= 30:
-        raise DnsSyncError("CF_DNS_RECORD_COUNT must be between 1 and 30")
+    if not 1 <= count <= 100:
+        raise DnsSyncError("CF_DNS_RECORD_COUNT must be between 1 and 100")
     print(f"Checking {len(records)} existing A records for {dns_name}, target={count}")
 
     load_status()
@@ -420,11 +435,31 @@ def main():
         raise DnsSyncError("CF_DNS_SITE_VERIFY requires CF_DNS_SITE_AUDIT_HOST")
     if site_verify:
         # Verify TLS/Host and web response for ALL sites using the shared CDN.
-        # If fewer than 30 compatible candidates remain, abort without DNS edits.
+        # If too few compatible candidates remain, abort without DNS edits.
         probe = lambda ip: compatible_with_sites(ip, site_hosts, audit_path)
     else:
         probe = tcp_reachable if check_enabled else None
-    desired = pick_ips(pools, count, networks, probe=probe)
+
+    require_reported_rtt = os.environ.get(
+        "CF_DNS_REQUIRE_REPORTED_RTT", "0"
+    ).lower() in ("1", "true", "yes")
+    max_rtt_text = os.environ.get("CF_DNS_MAX_RTT_MS", "").strip()
+    max_reported_rtt = None
+    if max_rtt_text:
+        try:
+            max_reported_rtt = float(max_rtt_text)
+        except ValueError as exc:
+            raise DnsSyncError("CF_DNS_MAX_RTT_MS must be numeric") from exc
+        if not 1 <= max_reported_rtt <= 1000:
+            raise DnsSyncError("CF_DNS_MAX_RTT_MS must be between 1 and 1000")
+        require_reported_rtt = True
+    if require_reported_rtt:
+        print("Strict latency mode enabled: unmeasured candidates are forbidden")
+    desired = pick_ips(
+        pools, count, networks, probe=probe,
+        max_reported_rtt=max_reported_rtt,
+        require_reported_rtt=require_reported_rtt,
+    )
     print(f"Selected IPs (CT/CU/CMCC first): {', '.join(desired)}")
     # Diagnostic TTFB is collected from GitHub; NEVER rank Chinese carrier
     # candidates by a US runner's response time.
