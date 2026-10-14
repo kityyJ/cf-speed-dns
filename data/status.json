@@ -1,16 +1,16 @@
 {
-  "generated_at": "2026-10-14 13:28:09 UTC",
+  "generated_at": "2026-10-14 17:57:21 UTC",
   "cloudflare_range_source": "live",
   "cloudflare_only": true,
   "counts": {
     "ct": 51,
     "cu": 120,
     "cmcc": 51,
-    "all": 201
+    "all": 196
   },
-  "healthy_sources": 19,
-  "failed_sources": 1,
-  "filtered_slow": 73,
+  "healthy_sources": 18,
+  "failed_sources": 2,
+  "filtered_slow": 79,
   "sources": [
     {
       "group": "ct",
@@ -35,9 +35,9 @@
       "group_title": "中国电信",
       "name": "MJZ 电信",
       "url": "https://cf.junzhen.qzz.io/best_ips_bj.txt",
-      "ok": true,
+      "ok": false,
       "count": 0,
-      "error": ""
+      "error": "HTTPSConnectionPool(host='cf.junzhen.qzz.io', port=443): Max retries exceeded with url: /best_ips_bj.txt (Caused by NameResolutionError(\"HTTPSConnection(host='cf.junzhen.qzz.io', p"
     },
     {
       "group": "cu",
@@ -117,7 +117,7 @@
       "name": "WeTest 三网",
       "url": "https://bestcf.pages.dev/wetest/ipv4.txt",
       "ok": true,
-      "count": 16,
+      "count": 17,
       "error": ""
     },
     {
@@ -189,7 +189,7 @@
       "name": "S5 公益",
       "url": "https://bestcf.pages.dev/s5gy/all.txt",
       "ok": true,
-      "count": 115,
+      "count": 116,
       "error": ""
     }
   ]
