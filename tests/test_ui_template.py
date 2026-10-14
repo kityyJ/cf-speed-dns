@@ -66,6 +66,8 @@ class FrontendTemplateTest(unittest.TestCase):
         self.assertIn("morphicons@1.7.1/dom", html)
         self.assertIn("createMorph(path, icon.from)", html)
         self.assertIn("morph.morphTo(active ? icon.to : icon.from", html)
+        self.assertIn(".page-btn{display:inline-flex;", html)
+        self.assertIn("white-space:nowrap;background:var(--panel)", html)
         self.assertNotIn("calculatePageSize", html)
         self.assertIn("grid-template-areas:", html)
         self.assertIn("@media(max-width:920px)", html)
