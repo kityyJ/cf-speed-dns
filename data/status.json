@@ -1,16 +1,16 @@
 {
-  "generated_at": "2026-10-14 10:41:52 UTC",
+  "generated_at": "2026-10-14 12:19:34 UTC",
   "cloudflare_range_source": "live",
   "cloudflare_only": true,
   "counts": {
-    "ct": 54,
+    "ct": 51,
     "cu": 120,
-    "cmcc": 56,
-    "all": 227
+    "cmcc": 51,
+    "all": 200
   },
-  "healthy_sources": 19,
-  "failed_sources": 1,
-  "filtered_slow": 56,
+  "healthy_sources": 18,
+  "failed_sources": 2,
+  "filtered_slow": 74,
   "sources": [
     {
       "group": "ct",
@@ -89,9 +89,9 @@
       "group_title": "全部优选",
       "name": "ZhiXuan 镜像",
       "url": "https://addressesapi.090227.xyz/ip.164746.xyz",
-      "ok": true,
-      "count": 2,
-      "error": ""
+      "ok": false,
+      "count": 0,
+      "error": "('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))"
     },
     {
       "group": "all",
@@ -117,7 +117,7 @@
       "name": "WeTest 三网",
       "url": "https://bestcf.pages.dev/wetest/ipv4.txt",
       "ok": true,
-      "count": 17,
+      "count": 16,
       "error": ""
     },
     {
@@ -189,7 +189,7 @@
       "name": "S5 公益",
       "url": "https://bestcf.pages.dev/s5gy/all.txt",
       "ok": true,
-      "count": 116,
+      "count": 115,
       "error": ""
     }
   ]
