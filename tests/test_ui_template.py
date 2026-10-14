@@ -51,5 +51,19 @@ class FrontendTemplateTest(unittest.TestCase):
         self.assertNotIn("speed.cloudflare.com", html)
         self.assertNotIn("myip.ipip.net", html)
 
+
+    def test_adaptive_pagination_and_mobile_cards(self):
+        html = (ROOT / "index.html").read_text(encoding="utf-8")
+        self.assertIn("function calculatePageSize()", html)
+        self.assertIn('window.addEventListener("resize",scheduleResponsiveRender', html)
+        self.assertIn('window.visualViewport.addEventListener("resize",scheduleResponsiveRender', html)
+        self.assertIn("grid-template-areas:", html)
+        self.assertIn("@media(max-width:920px)", html)
+        self.assertIn('pageSize=capacity', html)
+        self.assertIn('Math.ceil(rows.length/pageSize)', html)
+        self.assertIn('Math.min(start+pageSize,rows.length)', html)
+        self.assertNotIn("const PAGE_SIZE=30", html)
+        self.assertIn('id="export-json"', html)
+
 if __name__ == "__main__":
     unittest.main()

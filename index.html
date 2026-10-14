@@ -49,6 +49,67 @@
       .header-inner .auto-badge{margin-left:0}
       .header-subtitle{font-size:10px}
     }
+
+    /* Responsive page: compact desktop table, mobile cards, and viewport-aware paging. */
+    html{-webkit-text-size-adjust:100%}
+    body{min-width:0}
+    .toolbar,.table-meta,.pagination,.header-inner,.bottom,.filters,.tools{min-width:0}
+    @media(min-width:921px){
+      .header-inner,.container{width:min(1320px,calc(100% - 32px))}
+      .container{margin-top:16px;margin-bottom:28px}
+      .toolbar{padding:14px 18px 12px;gap:10px}
+      .table-meta{padding:7px 18px 10px}
+      th{padding:10px 8px}
+      td{padding:8px 8px}
+      .pagination{padding:10px 18px}
+      .bottom{padding-top:9px}
+    }
+    @media(max-width:920px){
+      .table-wrap{overflow-x:visible}
+      table{display:block;width:100%;min-width:0}
+      thead{display:none}
+      tbody{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;padding:12px}
+      tbody tr{min-width:0;min-height:146px;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"rank state" "address action" "carrier latency" "source source" "tag tag";gap:5px 10px;align-content:start;padding:11px 13px;background:var(--panel);border:1px solid var(--border);border-radius:12px}
+      tbody td{min-width:0!important;max-width:100%;width:auto!important;padding:0!important;border:0;text-align:left;line-height:1.5}
+      tbody td:nth-child(1){grid-area:rank;font-size:11px}
+      tbody td:nth-child(1)::before{content:"# "}
+      tbody td:nth-child(2){grid-area:address;align-self:center}
+      tbody td:nth-child(3){grid-area:carrier}
+      tbody td:nth-child(4){grid-area:latency;text-align:right;align-self:center}
+      tbody td:nth-child(5){grid-area:source;color:var(--muted);font-size:11px;overflow:hidden}
+      tbody td:nth-child(6){grid-area:tag;color:var(--muted);font-size:11px;overflow:hidden}
+      tbody td:nth-child(5)::before{content:"来源：";font-weight:650}
+      tbody td:nth-child(6)::before{content:"标签：";font-weight:650}
+      tbody td:nth-child(7){grid-area:state;justify-self:end}
+      tbody td:nth-child(8){grid-area:action;justify-self:end;align-self:center}
+      tbody .tags{justify-content:flex-start}
+      tbody .source,tbody .tag{max-width:100%;vertical-align:middle;white-space:normal;overflow-wrap:anywhere;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden}
+      tbody td.empty{grid-column:1/-1;grid-row:1/-1;padding:25px 8px!important;text-align:center}
+      .pagination{padding:11px 14px}
+      .bottom{flex-wrap:wrap;padding-top:12px}
+    }
+    @media(min-width:680px) and (max-width:920px){
+      tbody{grid-template-columns:repeat(2,minmax(0,1fr))}
+    }
+    @media(max-width:650px){
+      .container{margin-top:12px;margin-bottom:22px}
+      .toolbar{padding:11px 12px 9px;gap:9px}
+      .filters{flex-wrap:nowrap;width:100%;max-width:100%;overflow-x:auto;scrollbar-width:thin;padding-bottom:3px}
+      .filter{flex:0 0 auto;padding:8px 9px}
+      .tools{width:100%;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+      .search{grid-column:1/-1;width:100%;min-width:0;height:38px}
+      .search input{font-size:16px}
+      .btn{flex:auto;min-width:0;padding:0 6px}
+      .table-meta{padding:7px 12px 10px;flex-wrap:wrap;gap:4px 8px}
+      .meta-hint{white-space:normal}
+      tbody{padding:10px}
+      .pagination{gap:9px}
+      .bottom{gap:5px}
+    }
+    @media(max-width:360px){
+      .header-summary{flex:1 1 100%}
+      .header-inner .auto-badge{max-width:100%;white-space:normal}
+    }
   </style>
 </head>
 <body>
@@ -71,7 +132,7 @@
     </div>
     <div class="table-meta"><span id="summary" role="status">正在拉取优选数据…</span><span id="dns-status" class="meta-hint">DNS 只读查询，不修改后台记录</span></div>
     <div class="table-wrap"><table><thead><tr><th>#</th><th>优选 IP</th><th>线路</th><th title="只有第三方来源提供 ms 时显示；不是即时测速">来源延迟 ⓘ</th><th>来源</th><th>标签</th><th>状态</th><th>操作</th></tr></thead><tbody id="rows"><tr><td colspan="8" class="empty">正在加载…</td></tr></tbody></table></div>
-    <div class="pagination"><span id="page-summary">每页 30 条</span><div class="pages"><button class="page-btn" id="prev-page" type="button" disabled>上一页</button><span id="page-number">1 / 1</span><button class="page-btn" id="next-page" type="button" disabled>下一页</button></div></div>
+    <div class="pagination"><span id="page-summary">自动适配 · 计算中…</span><div class="pages"><button class="page-btn" id="prev-page" type="button" disabled>上一页</button><span id="page-number">1 / 1</span><button class="page-btn" id="next-page" type="button" disabled>下一页</button></div></div>
   </section>
   <footer class="bottom"><span>IP 来自公开优选数据；「来源延迟」是上游历史参考值，未提供的 IP 不代表慢或不可用。</span><span>自动更新 · 来源延迟仅供参考，非实时测速 · 当前 DNS 仅供查询 · <a href="https://github.com/kityyJ/cook-speed-dns" target="_blank" rel="noopener noreferrer">GitHub ↗</a></span></footer>
 </main><div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -79,7 +140,7 @@
 (()=>{
   "use strict";
   const G=["ct","cu","cmcc"],N={ct:"电信",cu:"联通",cmcc:"移动"};
-  const PAGE_SIZE=30;
+  let pageSize=12;
   let filter="all",query="",page=1,data=[],dnsIps=new Set(),sources={},loaded=false,loading=false,metaTimestamp="";
   const $=s=>document.querySelector(s);
   const esc=x=>String(x??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -144,10 +205,27 @@
     if(query){const hay=[row.ip,row.source,row.tag,[...row.lines].map(g=>N[g]).join(" "),dnsIps.has(row.ip)?"解析中":"候选"].join(" ").toLowerCase();if(!hay.includes(query))return false}
     return true;
   })}
+  // Keep all records accessible while fitting each page to the screen's free height.
+  function calculatePageSize(){
+    const viewport=Math.min(window.innerHeight,window.visualViewport?.height||window.innerHeight);
+    const free=viewport-$(".table-wrap").getBoundingClientRect().top-$(".pagination").offsetHeight-$(".bottom").offsetHeight-22;
+    if(window.matchMedia("(max-width:920px)").matches){
+      const columns=window.matchMedia("(min-width:680px)").matches?2:1;
+      const rowsPerColumn=Math.max(1,Math.floor((free-24+10)/168));
+      return Math.min(30,columns*rowsPerColumn);
+    }
+    return Math.max(2,Math.min(30,Math.floor((free-40)/43)));
+  }
   function render(){
-    const rows=filtered();const totalPages=Math.max(1,Math.ceil(rows.length/PAGE_SIZE));page=Math.min(page,totalPages);
-    const start=(page-1)*PAGE_SIZE;
-    const table=rows.slice(start,start+PAGE_SIZE);
+    const capacity=calculatePageSize();
+    if(capacity!==pageSize){
+      const firstVisible=(page-1)*pageSize;
+      pageSize=capacity;
+      page=Math.floor(firstVisible/pageSize)+1;
+    }
+    const rows=filtered();const totalPages=Math.max(1,Math.ceil(rows.length/pageSize));page=Math.max(1,Math.min(page,totalPages));
+    const start=(page-1)*pageSize;
+    const table=rows.slice(start,start+pageSize);
     $("#rows").innerHTML=table.map((row,i)=>{
       const labels=[...row.lines].sort((a,b)=>G.indexOf(a)-G.indexOf(b));
       const lines=labels.length?labels.map(g=>`<span class="line-pill line-${g}">${N[g]}</span>`).join(""):'<span class="line-pill line-none">通用</span>';
@@ -158,9 +236,9 @@
       return `<tr><td>${start+i+1}</td><td><span class="ip">${esc(row.ip)}</span></td><td><div class="tags">${lines}</div></td><td>${latency}</td><td><span class="source" title="${esc(row.source)}">${esc(row.source)}</span></td><td><span class="tag" title="${esc(row.tag)}">${esc(row.tag)}</span></td><td><span class="state ${online?"live":""}">${online?"当前解析":"候选"}</span></td><td><button class="copy" type="button" data-ip="${esc(row.ip)}" aria-label="复制 ${esc(row.ip)}">复制</button></td></tr>`;
     }).join("")||`<tr><td colspan="8" class="empty">${loaded?"没有符合条件的 IP":"正在载入数据…"}</td></tr>`;
     const measured=rows.reduce((total,row)=>total+(row.latencyMs!==null?1:0),0);
-    $("#summary").innerHTML=`共 <strong>${rows.length}</strong> 条 · <strong>${measured}</strong> 条有来源延迟${query?" · 搜索结果":""}${rows.length?` · 显示 ${start+1}–${Math.min(start+PAGE_SIZE,rows.length)}`:""}`;
+    $("#summary").innerHTML=`共 <strong>${rows.length}</strong> 条 · <strong>${measured}</strong> 条有来源延迟${query?" · 搜索结果":""}${rows.length?` · 显示 ${start+1}–${Math.min(start+pageSize,rows.length)}`:""}`;
     $("#summary").title="未显示延迟的 IP 是上游未提供数据；网页没有对单个 IP 进行实时网络测速。";
-    $("#page-summary").textContent=`每页 ${PAGE_SIZE} 条`;
+    $("#page-summary").textContent=`自动适配 · 每页 ${pageSize} 条`;
     $("#page-number").textContent=page+" / "+totalPages;
     $("#prev-page").disabled=page<=1;$("#next-page").disabled=page>=totalPages;
   }
@@ -173,6 +251,14 @@
   $("#refresh").addEventListener("click",reload);
   $("#copy-all").addEventListener("click",()=>{const r=filtered();if(!r.length)return toast("当前没有可复制的 IP");copy(r.map(x=>x.ip).join("\n"))});
   $("#export-txt").addEventListener("click",()=>download("txt"));$("#export-json").addEventListener("click",()=>download("json"));
+  let resizeFrame=0;
+  function scheduleResponsiveRender(){
+    if(resizeFrame)cancelAnimationFrame(resizeFrame);
+    resizeFrame=requestAnimationFrame(()=>{resizeFrame=0;render()});
+  }
+  window.addEventListener("resize",scheduleResponsiveRender,{passive:true});
+  if(window.visualViewport)window.visualViewport.addEventListener("resize",scheduleResponsiveRender,{passive:true});
+  if(document.fonts?.ready)document.fonts.ready.then(scheduleResponsiveRender);
   reload();
 })();
 </script>
