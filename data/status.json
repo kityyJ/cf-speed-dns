@@ -1,16 +1,16 @@
 {
-  "generated_at": "2026-10-14 12:19:34 UTC",
+  "generated_at": "2026-10-14 12:46:06 UTC",
   "cloudflare_range_source": "live",
   "cloudflare_only": true,
   "counts": {
     "ct": 51,
     "cu": 120,
     "cmcc": 51,
-    "all": 200
+    "all": 197
   },
-  "healthy_sources": 18,
-  "failed_sources": 2,
-  "filtered_slow": 74,
+  "healthy_sources": 19,
+  "failed_sources": 1,
+  "filtered_slow": 77,
   "sources": [
     {
       "group": "ct",
@@ -89,9 +89,9 @@
       "group_title": "全部优选",
       "name": "ZhiXuan 镜像",
       "url": "https://addressesapi.090227.xyz/ip.164746.xyz",
-      "ok": false,
-      "count": 0,
-      "error": "('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))"
+      "ok": true,
+      "count": 2,
+      "error": ""
     },
     {
       "group": "all",
