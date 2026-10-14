@@ -35,6 +35,7 @@ FALLBACK_CF_CIDRS = [
     "131.0.72.0/22",
 ]
 
+# Keep the checked-in page and generated template synchronized.
 INDEX_HTML = r"""<!doctype html>
 <html lang="zh-CN">
 <head>
@@ -224,7 +225,7 @@ INDEX_HTML = r"""<!doctype html>
     if(available===0)for(const item of fallback)insert(item);
     for(const ip of dnsIps)insert({ip,port:443,group:"dns",source:"Cloudflare DNS",tag:"已在解析池"});
     // Favor IPs with explicit upstream latency so the first page is informative.
-    // DNS-only records remain fully available under the "当前 DNS" filter.
+    // DNS-only records remain available under the "目前使用" filter.
     data=[...m.values()].sort((a,b)=>Number(b.latencyMs!==null)-Number(a.latencyMs!==null)||Number(dnsIps.has(b.ip))-Number(dnsIps.has(a.ip))||a.order-b.order||toNumber(a.ip)-toNumber(b.ip));
     const st=results[4].status==="fulfilled"?results[4].value:null;
     metaTimestamp=st?.generated_at||"";
