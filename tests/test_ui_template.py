@@ -2,9 +2,7 @@ import re
 import unittest
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
-
 
 class FrontendTemplateTest(unittest.TestCase):
     def test_generator_matches_checked_in_html(self):
@@ -14,26 +12,26 @@ class FrontendTemplateTest(unittest.TestCase):
         html = (ROOT / "index.html").read_text(encoding="utf-8")
         self.assertEqual(match.group(1) + "\n", html)
 
-    def test_new_cdn_and_required_ui(self):
+    def test_compact_ip_table_keeps_existing_data_features(self):
         html = (ROOT / "index.html").read_text(encoding="utf-8")
-        self.assertIn('cdn.yigeyao.com', html)
-        self.assertNotIn('cdn.jia.nz', html)
-        for value in ('id="net-domestic"', 'id="net-foreign"', 'id="net-cloudflare"',
-                      'id="net-google"', 'id="net-dns"', 'id="dns-grid"',
-                      'id="rows"', 'id="top-grid"', 'id="count-ct"',
-                      'href="./assets/network.css?v=2"', 'src="./assets/network.js?v=2"'):
+        self.assertIn("cdn.yigeyao.com", html)
+        self.assertNotIn("cdn.jia.nz", html)
+        for value in (
+            'id="rows"', 'id="count-all"', 'id="count-dns"', 'id="count-ct"',
+            'id="count-cu"', 'id="count-cmcc"', 'id="search"', 'id="refresh"',
+            'id="copy-all"', 'id="export-txt"', 'id="export-json"',
+            'data-filter="all"', 'data-filter="dns"', 'data-filter="ct"',
+            'data-filter="cu"', 'data-filter="cmcc"',
+            "./api/ct.json", "./api/cu.json", "./api/cmcc.json", "./api/all.json",
+            "./data/status.json"
+        ):
             self.assertIn(value, html)
-        self.assertTrue((ROOT / "assets/network.js").is_file())
-        self.assertTrue((ROOT / "assets/network.css").is_file())
 
-    def test_no_simulated_latency_or_ip(self):
-        script = (ROOT / "assets/network.js").read_text(encoding="utf-8")
-        self.assertIn('performance.now()', script)
-        self.assertIn('net-google', script)
-        self.assertIn('myip.ipip.net/json', script)
-        self.assertIn('speed.cloudflare.com/meta', script)
-        self.assertNotIn('cdn.jia.nz', script)
-
+    def test_page_is_display_only_change(self):
+        html = (ROOT / "index.html").read_text(encoding="utf-8")
+        self.assertIn("DNS 只读查询，不修改后台记录", html)
+        self.assertNotIn("speed.cloudflare.com", html)
+        self.assertNotIn("myip.ipip.net", html)
 
 if __name__ == "__main__":
     unittest.main()
