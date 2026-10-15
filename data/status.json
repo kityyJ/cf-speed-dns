@@ -1,16 +1,16 @@
 {
-  "generated_at": "2026-10-15 14:22:04 UTC",
+  "generated_at": "2026-10-15 18:35:10 UTC",
   "cloudflare_range_source": "live",
   "cloudflare_only": true,
   "counts": {
-    "ct": 48,
+    "ct": 52,
     "cu": 120,
     "cmcc": 46,
-    "all": 178
+    "all": 201
   },
   "healthy_sources": 20,
   "failed_sources": 0,
-  "filtered_slow": 89,
+  "filtered_slow": 70,
   "sources": [
     {
       "group": "ct",
@@ -117,7 +117,7 @@
       "name": "WeTest 三网",
       "url": "https://bestcf.pages.dev/wetest/ipv4.txt",
       "ok": true,
-      "count": 2,
+      "count": 12,
       "error": ""
     },
     {
@@ -189,7 +189,7 @@
       "name": "S5 公益",
       "url": "https://bestcf.pages.dev/s5gy/all.txt",
       "ok": true,
-      "count": 101,
+      "count": 107,
       "error": ""
     }
   ]
