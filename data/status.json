@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-10-15 18:35:10 UTC",
+  "generated_at": "2026-10-15 21:43:18 UTC",
   "cloudflare_range_source": "live",
   "cloudflare_only": true,
   "counts": {
-    "ct": 52,
+    "ct": 51,
     "cu": 120,
     "cmcc": 46,
-    "all": 201
+    "all": 200
   },
   "healthy_sources": 20,
   "failed_sources": 0,
@@ -189,7 +189,7 @@
       "name": "S5 公益",
       "url": "https://bestcf.pages.dev/s5gy/all.txt",
       "ok": true,
-      "count": 107,
+      "count": 111,
       "error": ""
     }
   ]
