@@ -1,16 +1,16 @@
 {
-  "generated_at": "2026-10-15 04:25:59 UTC",
+  "generated_at": "2026-10-15 09:21:17 UTC",
   "cloudflare_range_source": "live",
   "cloudflare_only": true,
   "counts": {
-    "ct": 48,
+    "ct": 47,
     "cu": 120,
     "cmcc": 46,
-    "all": 195
+    "all": 187
   },
   "healthy_sources": 20,
   "failed_sources": 0,
-  "filtered_slow": 73,
+  "filtered_slow": 79,
   "sources": [
     {
       "group": "ct",
